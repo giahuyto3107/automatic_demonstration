@@ -7,8 +7,20 @@ class AppColors {
 
   static const Color textOnDark = Color(0xffFFFFFF);
 
+  static const Color primaryColor = Color(0xffF97015);
 
-  static const Color backgroundColor = Color (0xff363F4E);
+  static const Color sliderInactiveColor = Colors.white;
+
+  static const Color sliderThumbColor = Colors.white;
+
+  static const LinearGradient backgroundColor = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      Color(0xFF485563),
+      Color(0xFF29323C),
+    ],
+  );
 
   static const LinearGradient logoColor = LinearGradient(
     begin: Alignment.centerLeft,   // Matches the horizontal flow in your image

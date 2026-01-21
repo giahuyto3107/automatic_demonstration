@@ -21,3 +21,29 @@ class FoodStallDataProvider extends InheritedWidget {
     return foodStallModels != oldWidget.foodStallModels;
   }
 }
+
+class FoodStallItemProvider extends InheritedWidget {
+  final int index;
+  final void Function(int) onPlayTap;
+  final void Function(int) onSkipTap;
+
+  const FoodStallItemProvider({
+    super.key,
+    required this.index,
+    required this.onPlayTap,
+    required this.onSkipTap,
+    required super.child,
+  });
+
+  static FoodStallItemProvider? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<FoodStallItemProvider>();
+  }
+
+  @override
+  bool updateShouldNotify(FoodStallItemProvider oldWidget) {
+    // Rebuild if the index changes (unlikely in a stable list) or callbacks change
+    return index != oldWidget.index ||
+      onPlayTap != oldWidget.onPlayTap ||
+      onSkipTap != oldWidget.onSkipTap;
+  }
+}

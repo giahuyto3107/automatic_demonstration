@@ -1,5 +1,6 @@
 import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
 import 'package:automatic_demonstration/features/home_screen/data/food_stall_model.dart';
+import 'package:automatic_demonstration/features/home_screen/views/audio_popup_modal.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -71,20 +72,74 @@ class _FoodStallListTitle extends StatelessWidget {
   }
 }
 
-class _FoodStallList extends StatelessWidget {
+class _FoodStallList extends StatefulWidget {
   const _FoodStallList();
 
   @override
-  Widget build (BuildContext context) {
-    final dataProvider = FoodStallDataProvider.of(context);
-    final foodStallModels = dataProvider?.foodStallModels ?? [];
+  State<_FoodStallList> createState() => _FoodStallListState();
+}
 
+class _FoodStallListState extends State<_FoodStallList> {
+  late List<bool> allowFoodStallIndexes;
+  late List<FoodStallModel> foodStallModels;
+
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_isInitialized) {
+      final dataProvider = FoodStallDataProvider.of(context);
+      foodStallModels = dataProvider?.foodStallModels ?? [];
+      allowFoodStallIndexes = List.filled(foodStallModels.length, true);
+
+      _isInitialized = true; // Mark as done
+    }
+  }
+
+  void onSkipTap(int index) {
+    setState(() {
+      allowFoodStallIndexes[index] = false;
+    });
+  }
+
+  void onPlayTap(int index) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext sheetContext) {
+        return AudioPopupModal(
+          foodStallModel: foodStallModels[index],
+        );
+      }
+    );
+  }
+
+  @override
+  Widget build (BuildContext context) {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: foodStallModels.length,
       separatorBuilder: (context, index) => SizedBox(height: AppConstants.spacingL.h),
       itemBuilder: (context, index) {
-        return _FoodStallContainer(foodStallModel: foodStallModels[index]);
+        if (!allowFoodStallIndexes[index]) return SizedBox.shrink();
+
+        return FoodStallItemProvider(
+          index: index,
+          onPlayTap: onPlayTap,
+          onSkipTap: onSkipTap,
+          child: _FoodStallContainer(
+            foodStallModel: foodStallModels[index],
+          ),
+        );
       },
     );
   }
@@ -94,7 +149,7 @@ class _FoodStallContainer extends StatelessWidget {
   final FoodStallModel foodStallModel;
 
   const _FoodStallContainer({
-    required this.foodStallModel
+    required this.foodStallModel,
   });
 
   @override
@@ -184,7 +239,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
     required this.foodStallName,
     required this.foodStallDescription,
     required this.distanceMeter,
-    required this.distanceSecond
+    required this.distanceSecond,
   });
 
   @override
@@ -294,52 +349,61 @@ class _ActionButtonsRow extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final provider = FoodStallItemProvider.of(context);
+    if (provider == null) return const SizedBox();
+    
     return Row(
       children: [
-        Container(
-          height: 40.h,
-          decoration: BoxDecoration(
-            color: AppColors.playButtonColor,
-            borderRadius: .circular(AppConstants.radiusM.r),
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingL.w,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                FontAwesomeIcons.play,
-                color: AppColors.textOnDark,
-                size: AppConstants.fontS.r,
-              ),
-              SizedBox(width: AppConstants.spacingS.w,),
-              Text(
-                AppStrings.playAudio,
-                style: TextStyle(
-                  fontSize: AppConstants.fontM.sp,
+        GestureDetector(
+          onTap: () => provider.onPlayTap(provider.index),
+          child: Container(
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: AppColors.playButtonColor,
+              borderRadius: .circular(AppConstants.radiusM.r),
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppConstants.spacingL.w,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  FontAwesomeIcons.play,
                   color: AppColors.textOnDark,
-                  fontWeight: .w400
+                  size: AppConstants.fontS.r,
                 ),
-              )
-            ],
+                SizedBox(width: AppConstants.spacingS.w,),
+                Text(
+                  AppStrings.playAudio,
+                  style: TextStyle(
+                    fontSize: AppConstants.fontM.sp,
+                    color: AppColors.textOnDark,
+                    fontWeight: .w400
+                  ),
+                )
+              ],
+            ),
           ),
         ),
 
         SizedBox(width: AppConstants.spacingXS.w,),
 
-        Container(
-          height: 40.h,
-          decoration: BoxDecoration(
-            color: AppColors.skipButtonColor,
-            borderRadius: .circular(AppConstants.radiusM.r),
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingL.w
-          ),
-          child: Icon(
-            FontAwesomeIcons.forwardStep,
-            color: AppColors.textOnDark,
-            size: AppConstants.fontS.r,
+        GestureDetector(
+          onTap: () => provider.onSkipTap(provider.index),
+          child: Container(
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: AppColors.skipButtonColor,
+              borderRadius: .circular(AppConstants.radiusM.r),
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppConstants.spacingL.w
+            ),
+            child: Icon(
+              FontAwesomeIcons.forwardStep,
+              color: AppColors.textOnDark,
+              size: AppConstants.fontS.r,
+            ),
           ),
         )
       ],

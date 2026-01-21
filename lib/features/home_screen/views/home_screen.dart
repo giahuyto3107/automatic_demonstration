@@ -51,29 +51,34 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            _HeadingRow(),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.backgroundColor
+          ),
+          child: Column(
+            children: [
+              _HeadingRow(),
 
-            SizedBox(height: AppConstants.spacingM.h,),
+              SizedBox(height: AppConstants.spacingM.h,),
 
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppConstants.spacingXL.w,
-                ),
-                child: Column(
-                  children: [
-                    MapContainer(),
-                    Expanded(
-                      child: FoodStallListSection(
-                        foodStallModels: foodStallModels)
-                    )
-                  ],
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppConstants.spacingXL.w,
+                  ),
+                  child: Column(
+                    children: [
+                      MapContainer(),
+                      Expanded(
+                        child: FoodStallListSection(
+                          foodStallModels: foodStallModels)
+                      )
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       )
     );
