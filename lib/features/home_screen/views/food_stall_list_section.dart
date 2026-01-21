@@ -165,8 +165,8 @@ class _FoodStallContainer extends StatelessWidget {
             foodStallModel: foodStallModel,
           ),
           _FoodStallLowerContainer(
-            distanceMeter: foodStallModel.distanceMeter,
-            distanceSecond: foodStallModel.distanceSecond,
+            distance: foodStallModel.distance,
+            audioLength: foodStallModel.audioLength,
             foodStallDescription: foodStallModel.foodStallDescription,
             foodStallName: foodStallModel.foodStallName,
           ),
@@ -214,7 +214,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                "${foodStallModel.distanceMeter.toStringAsFixed(1)}m",
+                "${foodStallModel.distance.toStringAsFixed(1)}m",
                 style: TextStyle(
                   fontWeight: .w500,
                   fontSize: AppConstants.fontXS.sp,
@@ -232,14 +232,14 @@ class _FoodStallUpperContainer extends StatelessWidget {
 class _FoodStallLowerContainer extends StatelessWidget {
   final String foodStallName;
   final String foodStallDescription;
-  final double distanceMeter;
-  final int distanceSecond;
+  final double distance;
+  final int audioLength;
 
   const _FoodStallLowerContainer({
     required this.foodStallName,
     required this.foodStallDescription,
-    required this.distanceMeter,
-    required this.distanceSecond,
+    required this.distance,
+    required this.audioLength,
   });
 
   @override
@@ -281,8 +281,8 @@ class _FoodStallLowerContainer extends StatelessWidget {
             SizedBox(height: AppConstants.spacingL.h,),
 
             _TimeAndSpaceDistanceRow(
-              distanceMeter: distanceMeter,
-              distanceSecond: distanceSecond,
+              distance: distance,
+              audioLength: audioLength,
             ),
 
             SizedBox(height: AppConstants.spacingM.h,),
@@ -296,12 +296,12 @@ class _FoodStallLowerContainer extends StatelessWidget {
 }
 
 class _TimeAndSpaceDistanceRow extends StatelessWidget {
-  final double distanceMeter;
-  final int distanceSecond;
+  final double distance;
+  final int audioLength;
 
   const _TimeAndSpaceDistanceRow({
-    required this.distanceMeter,
-    required this.distanceSecond,
+    required this.distance,
+    required this.audioLength,
   });
 
   @override
@@ -315,7 +315,7 @@ class _TimeAndSpaceDistanceRow extends StatelessWidget {
         ),
         SizedBox(width: AppConstants.spacingXS.w,),
         Text(
-          "${distanceMeter.toStringAsFixed(1)}m",
+          "${distance.toStringAsFixed(1)}m",
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
             color: AppColors.textOnDark,
@@ -332,7 +332,7 @@ class _TimeAndSpaceDistanceRow extends StatelessWidget {
         ),
         SizedBox(width: AppConstants.spacingXS.w,),
         Text(
-          "${distanceSecond}s",
+          "${audioLength}s",
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
             color: AppColors.textOnDark,
@@ -353,6 +353,7 @@ class _ActionButtonsRow extends StatelessWidget {
     if (provider == null) return const SizedBox();
     
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
           onTap: () => provider.onPlayTap(provider.index),
@@ -386,7 +387,7 @@ class _ActionButtonsRow extends StatelessWidget {
           ),
         ),
 
-        SizedBox(width: AppConstants.spacingXS.w,),
+        SizedBox(width: AppConstants.spacingM.w,),
 
         GestureDetector(
           onTap: () => provider.onSkipTap(provider.index),

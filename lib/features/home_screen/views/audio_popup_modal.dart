@@ -7,13 +7,26 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:automatic_demonstration/core/utils/time_converter.dart';
 
-class AudioPopupModal extends StatelessWidget {
+class AudioPopupModal extends StatefulWidget {
   final FoodStallModel foodStallModel;
 
   const AudioPopupModal({
     super.key,
     required this.foodStallModel
   });
+
+  @override
+  State<AudioPopupModal> createState() => _AudioPopupModalState();
+}
+
+class _AudioPopupModalState extends State<AudioPopupModal> {
+  bool isPlaying = true;
+
+  void toggleAudio() {
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+  }
 
   @override
   Widget build (BuildContext context) {
@@ -24,7 +37,8 @@ class AudioPopupModal extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xff2E3A44)
+          color: Color(0xff2E3A44),
+          borderRadius: .circular(AppConstants.radiusM.r)
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -35,18 +49,22 @@ class AudioPopupModal extends StatelessWidget {
             mainAxisSize: .min,
             children: [
               _ModalHeading(
-                foodStallModel: foodStallModel
+                foodStallModel: widget.foodStallModel
               ),
               SizedBox(height: AppConstants.spacingS.h,),
               _AudioSlider(
-                foodStallModel: foodStallModel,
-                maximumTimelineSec: 59,
+                foodStallModel: widget.foodStallModel,
+                maximumTimelineSec: widget.foodStallModel.audioLength,
+                isPlaying: isPlaying
               ),
               SizedBox(height: AppConstants.spacingXS.h,),
-              _PlayStopToggleButton(),
+              _PlayStopToggleButton(
+                isPlaying: isPlaying,
+                onToggle: toggleAudio
+              ),
               SizedBox(height: AppConstants.spacingL.h,),
               _TextContainer(
-                foodStallModel: foodStallModel
+                foodStallModel: widget.foodStallModel
               )
             ],
           ),
@@ -105,7 +123,6 @@ class _ModalHeading extends StatelessWidget {
                 )
               ],
             )
-
           ],
         )
       ],
@@ -116,10 +133,12 @@ class _ModalHeading extends StatelessWidget {
 class _AudioSlider extends StatefulWidget {
   final int maximumTimelineSec;
   final FoodStallModel foodStallModel;
+  final bool isPlaying;
 
   const _AudioSlider({
     required this.foodStallModel,
     required this.maximumTimelineSec,
+    required this.isPlaying,
   });
 
   @override
@@ -137,13 +156,29 @@ class _AudioSliderState extends State<_AudioSlider> {
     // TODO: implement initState
     super.initState();
     totalDurationSeconds = widget.maximumTimelineSec;
-    startProgress();
+
+    if (widget.isPlaying) {
+      startProgress();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_AudioSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPlaying != oldWidget.isPlaying) {
+      if (widget.isPlaying) {
+        startProgress();
+      } else {
+        stopProgress();
+      }
+    }
   }
 
   void startProgress() {
+    _timer?.cancel();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
-        // Calculate the increment for 1 second (100% / total seconds)
         double step = 1.0 / totalDurationSeconds;
 
         if (currentAudioPercentage + step >= 1.0) {
@@ -156,6 +191,10 @@ class _AudioSliderState extends State<_AudioSlider> {
         }
       });
     });
+  }
+
+  void stopProgress() {
+    _timer?.cancel();
   }
 
   @override
@@ -185,30 +224,48 @@ class _AudioSliderState extends State<_AudioSlider> {
           ),
         ),
 
-        Row(
-          mainAxisAlignment: .spaceBetween,
-          children: [
-            Text(
-              "${TimeConverter.secondToMinuteString(
-                currentAudioSecond
-              )}:${TimeConverter.secondToSecondString(
-                currentAudioSecond
-              )}",
-              style: TextStyle(
-                fontSize: AppConstants.fontS.sp,
-                fontWeight: .w500,
-                color: AppColors.textOnDark
-              ),
-            ),
-            Text(
-              TimeConverter.secondToMinuteSecondString(totalDurationSeconds),
-              style: TextStyle(
-                fontSize: AppConstants.fontS.sp,
-                fontWeight: .w500,
-                color: AppColors.textOnDark
-              ),
-            )
-          ],
+        _AudioTimeIndicator(
+          currentAudioSecond: currentAudioSecond,
+          totalDurationSeconds: totalDurationSeconds
+        )
+      ],
+    );
+  }
+}
+
+class _AudioTimeIndicator extends StatelessWidget {
+  final int currentAudioSecond;
+  final int totalDurationSeconds;
+
+  const _AudioTimeIndicator({
+    required this.currentAudioSecond,
+    required this.totalDurationSeconds
+  });
+
+  @override
+  Widget build (BuildContext context) {
+    return Row(
+      mainAxisAlignment: .spaceBetween,
+      children: [
+        Text(
+          "${TimeConverter.secondToMinuteString(
+            currentAudioSecond
+          )}:${TimeConverter.secondToSecondString(
+            currentAudioSecond
+          )}",
+          style: TextStyle(
+            fontSize: AppConstants.fontS.sp,
+            fontWeight: .w500,
+            color: AppColors.textOnDark
+          ),
+        ),
+        Text(
+          TimeConverter.secondToMinuteSecondString(totalDurationSeconds),
+          style: TextStyle(
+            fontSize: AppConstants.fontS.sp,
+            fontWeight: .w500,
+            color: AppColors.textOnDark
+          ),
         )
       ],
     );
@@ -216,24 +273,35 @@ class _AudioSliderState extends State<_AudioSlider> {
 }
 
 class _PlayStopToggleButton extends StatelessWidget {
-  const _PlayStopToggleButton();
+  final bool isPlaying;
+  final Function() onToggle;
+
+  const _PlayStopToggleButton({
+    required this.isPlaying,
+    required this.onToggle,
+  });
 
   @override
   Widget build (BuildContext context) {
-    return Center(
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryColor,
-          borderRadius: .circular(AppConstants.radiusCircular.r),
-        ),
-        padding: EdgeInsets.symmetric(
-          horizontal: AppConstants.spacingS.w,
-          vertical: AppConstants.spacingS.w,
-        ),
-        child: Icon(
-          FontAwesomeIcons.play,
-          color: AppColors.textOnDark,
-          size: AppConstants.fontXXXL.r,
+    return GestureDetector(
+      onTap: onToggle,
+      child: Center(
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.primaryColor,
+            borderRadius: .circular(AppConstants.radiusCircular.r),
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppConstants.spacingS.w,
+            vertical: AppConstants.spacingS.w,
+          ),
+          child: Icon(
+            isPlaying
+              ? FontAwesomeIcons.pause
+              : FontAwesomeIcons.play,
+            color: AppColors.textOnDark,
+            size: AppConstants.fontXXXL.r,
+          ),
         ),
       ),
     );
