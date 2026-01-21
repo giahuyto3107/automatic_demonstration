@@ -15,65 +15,70 @@ class HomeScreen extends StatelessWidget {
       FoodStallModel(
         foodStallName: "Green Garden Salads",
         foodStallDescription: "Fresh organic salads and cold-pressed juices.",
-        distanceMeter: 450.5,
-        distanceSecond: 300,
+        distance: 450.5,
+        audioLength: 300,
         foodStallImage: "assets/images/stalls/salad_stall.jpg",
       ),
       FoodStallModel(
         foodStallName: "The Burger Hub",
         foodStallDescription: "Juicy Wagyu burgers with homemade brioche buns.",
-        distanceMeter: 1200.0,
-        distanceSecond: 720,
+        distance: 1200.0,
+        audioLength: 720,
         foodStallImage: "assets/images/stalls/burger_hub.jpg",
       ),
       FoodStallModel(
         foodStallName: "Sushi Zen",
         foodStallDescription: "Authentic hand-rolled sushi and sashimi platters.",
-        distanceMeter: 850.0,
-        distanceSecond: 510,
+        distance: 850.0,
+        audioLength: 510,
         foodStallImage: "assets/images/stalls/sushi_zen.jpg",
       ),
       FoodStallModel(
         foodStallName: "Pasta la Vista",
         foodStallDescription: "Freshly made Italian pasta with secret family sauces.",
-        distanceMeter: 2100.0,
-        distanceSecond: 1200,
+        distance: 2100.0,
+        audioLength: 1200,
         foodStallImage: "assets/images/stalls/pasta_stall.jpg",
       ),
       FoodStallModel(
         foodStallName: "Taco Fiesta",
         foodStallDescription: "Spicy Mexican street tacos with zesty lime crema.",
-        distanceMeter: 300.0,
-        distanceSecond: 180,
+        distance: 300.0,
+        audioLength: 180,
         foodStallImage: "assets/images/stalls/taco_fiesta.jpg",
       ),
     ];
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            _HeadingRow(),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.backgroundColor
+          ),
+          child: Column(
+            children: [
+              _HeadingRow(),
 
-            SizedBox(height: AppConstants.spacingM.h,),
+              SizedBox(height: AppConstants.spacingM.h,),
 
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppConstants.spacingXL.w,
-                ),
-                child: Column(
-                  children: [
-                    MapContainer(),
-                    Expanded(
-                      child: FoodStallListSection(
-                        foodStallModels: foodStallModels)
-                    )
-                  ],
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppConstants.spacingXL.w,
+                  ),
+                  child: Column(
+                    children: [
+                      MapContainer(),
+                      Expanded(
+                        child: FoodStallListSection(
+                          foodStallModels: foodStallModels)
+                      )
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       )
     );

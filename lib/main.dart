@@ -29,7 +29,7 @@ class MainApp extends StatelessWidget {
             routerConfig: appRouter,
             theme: ThemeData(
               // This sets the background color for every Scaffold in your app
-              scaffoldBackgroundColor: AppColors.backgroundColor, // Change 'white' to any color you want
+              scaffoldBackgroundColor: Colors.transparent, // Change 'white' to any color you want
 
               // Optional: Customize your primary colors here too
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
