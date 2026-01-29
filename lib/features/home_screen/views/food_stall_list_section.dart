@@ -1,5 +1,5 @@
 import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
-import 'package:automatic_demonstration/features/home_screen/data/food_stall_model.dart';
+import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/views/audio_popup_modal.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
 import 'package:flutter/material.dart';
@@ -52,11 +52,11 @@ class _FoodStallListTitle extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: Color(0xff1F2933),
-            borderRadius: .circular(AppConstants.radiusXXL.r),
+            borderRadius: .circular(AppConstants.radiusXL.r),
           ),
           padding: EdgeInsets.symmetric(
             horizontal: AppConstants.spacingL.w,
-            vertical: AppConstants.spacingM.h,
+            vertical: AppConstants.spacingS.h,
           ),
           child: Text(
             "$foodStallCount dia diem",
@@ -156,7 +156,6 @@ class _FoodStallContainer extends StatelessWidget {
   Widget build (BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: AppConstants.spacingM.w,
         vertical: AppConstants.spacingM.h,
       ),
       child: Column(

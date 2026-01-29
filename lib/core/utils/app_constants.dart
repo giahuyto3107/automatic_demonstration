@@ -76,6 +76,8 @@ class AppConstants {
 
   // ============ Font Sizes ============
 
+  static const double fontXXS = 8.0;
+
   /// Font size cực nhỏ: 10.0
   static const double fontXS = 10.0;
 

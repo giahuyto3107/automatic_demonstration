@@ -1,4 +1,4 @@
-import 'package:automatic_demonstration/features/home_screen/data/food_stall_model.dart';
+import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:flutter/material.dart';
 
 class FoodStallDataProvider extends InheritedWidget {
