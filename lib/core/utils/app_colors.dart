@@ -45,4 +45,10 @@ class AppColors {
   static const Color playButtonColor = Color(0xffF97015);
 
   static const Color skipButtonColor = Color(0xff2C3844);
+
+  static const Color enable = Color(0xff209851);
+
+  static const Color disable = Color(0xffFF0000);
+
+  static const Color connecting = Color(0xffE7F214);
 }

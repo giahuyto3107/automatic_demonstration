@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
-import 'package:automatic_demonstration/features/home_screen/data/food_stall_model.dart';
+import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
