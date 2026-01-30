@@ -51,4 +51,12 @@ class AppColors {
   static const Color disable = Color(0xffFF0000);
 
   static const Color connecting = Color(0xffE7F214);
+
+  static const Color selectedBackgroundColor = Color(0xff1f2933);
+
+  static const Color unselectedBackgroundColor = Color(0xffD9D9D9);
+
+  static const Color selectedTextColor = Colors.white;
+
+  static const Color unSelectedTextColor = Color(0xff000000);
 }
