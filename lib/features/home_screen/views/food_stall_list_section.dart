@@ -6,25 +6,86 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class FoodStallListSection extends StatelessWidget {
+class FoodStallListSection extends StatefulWidget {
   final List<FoodStallModel> foodStallModels;
-
-  const FoodStallListSection({
-    super.key,
-    required this.foodStallModels
-  });
+  const FoodStallListSection({super.key, required this.foodStallModels});
 
   @override
-  Widget build (BuildContext context) {
-    return FoodStallDataProvider(
-      foodStallModels: foodStallModels,
-      child: Column(
-        children: [
-          const _FoodStallListTitle(),
-          SizedBox(height: AppConstants.spacingM.h,),
-          Expanded(child: const _FoodStallList())
-        ],
-      ),
+  State<FoodStallListSection> createState() => _FoodStallListSectionState();
+}
+
+class _FoodStallListSectionState extends State<FoodStallListSection> {
+  late PageController _pageController;
+  late List<bool> _allowFoodStallIndexes;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.9);
+    _allowFoodStallIndexes = List.filled(widget.foodStallModels.length, true);
+
+    _pageController.addListener(() {
+      int next = _pageController.page?.round() ?? 0;
+
+      if (_currentPage != next) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() => _currentPage = next);
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose(); // Clean up memory
+    super.dispose();
+  }
+
+  void _onPlay(int index) {
+    setState(() {
+      showModalBottomSheet(
+          context: context,
+          isDismissible: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (BuildContext sheetContext) {
+            return AudioPopupModal(
+              foodStallModel: widget.foodStallModels[index],
+            );
+          }
+      );
+    });
+  }
+
+  void _onSkip(int index) {
+    setState(() {
+      _allowFoodStallIndexes[index] = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const _FoodStallListTitle(),
+        Expanded(
+          child: _FoodStallList(
+            models: widget.foodStallModels,
+            allowed: _allowFoodStallIndexes,
+            controller: _pageController,
+            onPlay: _onPlay,
+            onSkip: _onSkip,
+          ),
+        ),
+        _PageIndicator(
+          currentPage: _currentPage + 1,
+          maxPage: widget.foodStallModels.length,
+        ),
+        SizedBox(height: AppConstants.spacingM.h,)
+      ],
     );
   }
 }
@@ -59,7 +120,7 @@ class _FoodStallListTitle extends StatelessWidget {
             vertical: AppConstants.spacingS.h,
           ),
           child: Text(
-            "$foodStallCount dia diem",
+            "$foodStallCount địa điểm",
             style: TextStyle(
               fontSize: AppConstants.fontS.sp,
               color: Colors.white,
@@ -72,72 +133,37 @@ class _FoodStallListTitle extends StatelessWidget {
   }
 }
 
-class _FoodStallList extends StatefulWidget {
-  const _FoodStallList();
+class _FoodStallList extends StatelessWidget {
+  final List<FoodStallModel> models;
+  final List<bool> allowed;
+  final PageController controller;
+  final Function(int) onPlay;
+  final Function(int) onSkip;
+
+  const _FoodStallList({
+    required this.models,
+    required this.allowed,
+    required this.controller,
+    required this.onPlay,
+    required this.onSkip,
+  });
 
   @override
-  State<_FoodStallList> createState() => _FoodStallListState();
-}
-
-class _FoodStallListState extends State<_FoodStallList> {
-  late List<bool> allowFoodStallIndexes;
-  late List<FoodStallModel> foodStallModels;
-
-  bool _isInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    if (!_isInitialized) {
-      final dataProvider = FoodStallDataProvider.of(context);
-      foodStallModels = dataProvider?.foodStallModels ?? [];
-      allowFoodStallIndexes = List.filled(foodStallModels.length, true);
-
-      _isInitialized = true; // Mark as done
-    }
-  }
-
-  void onSkipTap(int index) {
-    setState(() {
-      allowFoodStallIndexes[index] = false;
-    });
-  }
-
-  void onPlayTap(int index) {
-    showModalBottomSheet(
-      context: context,
-      isDismissible: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext sheetContext) {
-        return AudioPopupModal(
-          foodStallModel: foodStallModels[index],
-        );
-      }
-    );
-  }
-
-  @override
-  Widget build (BuildContext context) {
-    return ListView.separated(
-      padding: EdgeInsets.zero,
-      itemCount: foodStallModels.length,
-      separatorBuilder: (context, index) => SizedBox(height: AppConstants.spacingL.h),
+  Widget build(BuildContext context) {
+    return PageView.builder(
+      controller: controller,
+      itemCount: models.length,
       itemBuilder: (context, index) {
-        if (!allowFoodStallIndexes[index]) return SizedBox.shrink();
+        if (!allowed[index]) return const SizedBox.shrink();
 
-        return FoodStallItemProvider(
-          index: index,
-          onPlayTap: onPlayTap,
-          onSkipTap: onSkipTap,
-          child: _FoodStallContainer(
-            foodStallModel: foodStallModels[index],
+        return Container(
+          // Margin creates space outside the colored stall container
+          margin: EdgeInsets.symmetric(horizontal: 12.0.w),
+          child: FoodStallItemProvider(
+            index: index,
+            onPlayTap: () => onPlay(index),
+            onSkipTap: () => onSkip(index),
+            child: _FoodStallContainer(foodStallModel: models[index]),
           ),
         );
       },
@@ -156,18 +182,24 @@ class _FoodStallContainer extends StatelessWidget {
   Widget build (BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        vertical: AppConstants.spacingM.h,
+        vertical: AppConstants.spacingS.h,
       ),
       child: Column(
         children: [
-          _FoodStallUpperContainer(
-            foodStallModel: foodStallModel,
+          Expanded(
+            flex: 4,
+            child: _FoodStallUpperContainer(
+              foodStallModel: foodStallModel,
+            ),
           ),
-          _FoodStallLowerContainer(
-            distance: foodStallModel.distance,
-            audioLength: foodStallModel.audioLength,
-            foodStallDescription: foodStallModel.foodStallDescription,
-            foodStallName: foodStallModel.foodStallName,
+          Expanded(
+            flex: 6,
+            child: _FoodStallLowerContainer(
+              distance: foodStallModel.distance,
+              audioLength: foodStallModel.audioLength,
+              foodStallDescription: foodStallModel.foodStallDescription,
+              foodStallName: foodStallModel.foodStallName,
+            ),
           ),
         ],
       ),
@@ -187,7 +219,6 @@ class _FoodStallUpperContainer extends StatelessWidget {
     return Stack(
       children: [
         Container(
-          height: 125.h,
           decoration: BoxDecoration(
             gradient: AppColors.foodStallUpperContainerBackgroundColor,
             borderRadius: .vertical(
@@ -200,7 +231,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
         ),
 
         Positioned(
-          top: 15.h,
+          top: 10.h,
           left: 15.w,
           child: Container(
             decoration: BoxDecoration(
@@ -209,7 +240,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
             ),
             padding: EdgeInsets.symmetric(
               horizontal: AppConstants.spacingL.w,
-              vertical: AppConstants.spacingS.h,
+              vertical: AppConstants.spacingXS.h,
             ),
             child: Center(
               child: Text(
@@ -251,11 +282,12 @@ class _FoodStallLowerContainer extends StatelessWidget {
           borderRadius: .vertical(bottom: Radius.circular(AppConstants.radiusM.r)),
         ),
         padding: EdgeInsets.symmetric(
-          horizontal: 15.w,
-          vertical: AppConstants.spacingL.h,
+          horizontal: AppConstants.spacingM.w,
+          vertical: AppConstants.spacingXS.h
         ),
         child: Column(
           crossAxisAlignment: .start,
+          mainAxisAlignment: .center,
           children: [
             Text(
               foodStallName,
@@ -265,9 +297,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
                 fontWeight: .w700
               ),
             ),
-
-            SizedBox(height: AppConstants.spacingS.h,),
-
+            SizedBox(height: AppConstants.spacingXXS.h,),
             Text(
               foodStallName,
               style: TextStyle(
@@ -277,15 +307,13 @@ class _FoodStallLowerContainer extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: AppConstants.spacingL.h,),
+            SizedBox(height: AppConstants.spacingS.h,),
 
             _TimeAndSpaceDistanceRow(
               distance: distance,
               audioLength: audioLength,
             ),
-
-            SizedBox(height: AppConstants.spacingM.h,),
-
+            SizedBox(height: AppConstants.spacingS.h,),
             _ActionButtonsRow()
           ],
         ),
@@ -348,65 +376,93 @@ class _ActionButtonsRow extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final int height = 28;
     final provider = FoodStallItemProvider.of(context);
     if (provider == null) return const SizedBox();
     
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        GestureDetector(
-          onTap: () => provider.onPlayTap(provider.index),
-          child: Container(
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: AppColors.playButtonColor,
-              borderRadius: .circular(AppConstants.radiusM.r),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: AppConstants.spacingL.w,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  FontAwesomeIcons.play,
-                  color: AppColors.textOnDark,
-                  size: AppConstants.fontS.r,
-                ),
-                SizedBox(width: AppConstants.spacingS.w,),
-                Text(
-                  AppStrings.playAudio,
-                  style: TextStyle(
-                    fontSize: AppConstants.fontM.sp,
+        Expanded(
+          flex: 5,
+          child: GestureDetector(
+            onTap: provider.onPlayTap,
+            child: Container(
+              height: height.h,
+              decoration: BoxDecoration(
+                color: AppColors.playButtonColor,
+                borderRadius: .circular(AppConstants.radiusM.r),
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppConstants.spacingL.w,
+              ),
+              child: Row(
+                mainAxisAlignment: .center,
+                children: [
+                  Icon(
+                    FontAwesomeIcons.play,
                     color: AppColors.textOnDark,
-                    fontWeight: .w400
+                    size: AppConstants.fontS.r,
                   ),
-                )
-              ],
+                  SizedBox(width: AppConstants.spacingXS.w,),
+                  Text(
+                    AppStrings.playAudio,
+                    style: TextStyle(
+                      fontSize: AppConstants.fontM.sp,
+                      color: AppColors.textOnDark,
+                      fontWeight: .w400
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
         ),
 
-        SizedBox(width: AppConstants.spacingM.w,),
-
-        GestureDetector(
-          onTap: () => provider.onSkipTap(provider.index),
-          child: Container(
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: AppColors.skipButtonColor,
-              borderRadius: .circular(AppConstants.radiusM.r),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: AppConstants.spacingL.w
-            ),
-            child: Icon(
-              FontAwesomeIcons.forwardStep,
-              color: AppColors.textOnDark,
-              size: AppConstants.fontS.r,
+        Expanded(
+          flex: 5,
+          child: GestureDetector(
+            onTap: provider.onSkipTap,
+            child: Container(
+              height: height.h,
+              decoration: BoxDecoration(
+                color: AppColors.skipButtonColor,
+                borderRadius: .circular(AppConstants.radiusM.r),
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppConstants.spacingL.w
+              ),
+              child: Icon(
+                FontAwesomeIcons.forwardStep,
+                color: AppColors.textOnDark,
+                size: AppConstants.fontS.r,
+              ),
             ),
           ),
         )
       ],
+    );
+  }
+}
+
+class _PageIndicator extends StatelessWidget {
+  final int currentPage;
+  final int maxPage;
+
+  const _PageIndicator({
+    required this.currentPage,
+    required this.maxPage
+  });
+
+  @override
+  Widget build (BuildContext context) {
+    return Text(
+     "$currentPage/$maxPage",
+     style: TextStyle(
+       fontSize: AppConstants.fontM.sp,
+       color: Colors.white,
+       fontWeight: .w400
+     ),
     );
   }
 }

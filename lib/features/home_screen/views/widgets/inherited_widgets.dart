@@ -24,8 +24,8 @@ class FoodStallDataProvider extends InheritedWidget {
 
 class FoodStallItemProvider extends InheritedWidget {
   final int index;
-  final void Function(int) onPlayTap;
-  final void Function(int) onSkipTap;
+  final VoidCallback onPlayTap;
+  final VoidCallback onSkipTap;
 
   const FoodStallItemProvider({
     super.key,

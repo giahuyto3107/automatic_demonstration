@@ -81,7 +81,7 @@ class _MapContainerState extends State<MapContainer> {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(initialPosition.latitude, initialPosition.longitude),
-          zoom: 15,
+          zoom: 14,
           tilt: 0
         )
       )
@@ -110,7 +110,7 @@ class _MapContainerState extends State<MapContainer> {
     // final apiKey = '';
 
     return SizedBox(
-      height: 150.h,
+      height: 160.h,
       width: double.infinity,
       // 2. ClipRRect adds rounded corners to match your UI theme
       child: Stack(
@@ -125,7 +125,7 @@ class _MapContainerState extends State<MapContainer> {
 
               initialCameraPosition: const CameraPosition(
                 target: LatLng(10.762, 106.660), // Default to Ho Chi Minh City
-                zoom: 14,
+                zoom: 13,
               ),
 
 
@@ -136,7 +136,7 @@ class _MapContainerState extends State<MapContainer> {
                 _startLiveTracking();
               },
 
-              myLocationEnabled: false,
+              myLocationEnabled: true,
               myLocationRenderMode: MyLocationRenderMode.compass,
             ),
 

@@ -1,6 +1,7 @@
 import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
 import 'package:automatic_demonstration/features/home_screen/data/gps_enum.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
+import 'package:automatic_demonstration/features/home_screen/views/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/map_container.dart';
 import 'package:flutter/material.dart';
@@ -58,33 +59,41 @@ class HomeScreen extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _HeadingRow(),
-
-              SizedBox(height: AppConstants.spacingM.h,),
-
+              const _HeadingRow(),
               Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppConstants.spacingXL.w,
-                  ),
-                  child: Column(
-                    children: [
-                      MapContainer(),
-                      SizedBox(height: AppConstants.spacingL.h,),
-                      _GPSStatusContainer(),
-                      SizedBox(height: AppConstants.spacingL.h,),
-                      Expanded(
-                        child: FoodStallListSection(
-                          foodStallModels: foodStallModels)
-                      )
-                    ],
-                  ),
-                ),
-              ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: const MapContainer()
+                    ),
+                    Expanded(
+                      flex: 7,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppConstants.spacingXL.w,
+                        ),
+                        child: Column(
+                          children: [
+                            SizedBox(height: AppConstants.spacingL.h,),
+                            const AudioCategoryContainer(),
+                            SizedBox(height: AppConstants.spacingM.h,),
+                            Expanded(
+                              child: FoodStallListSection(
+                                foodStallModels: foodStallModels
+                              )
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              )
             ],
           ),
         ),
-      )
+      ),
     );
   }
 }
@@ -102,45 +111,10 @@ class _HeadingRow extends StatelessWidget {
           vertical: AppConstants.spacingL.h,
         ),
         child: Row(
+          mainAxisAlignment: .spaceBetween,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: AppColors.logoColor,
-                borderRadius: .circular(AppConstants.radiusM.r),
-              ),
-              padding: EdgeInsets.symmetric(
-                horizontal: AppConstants.spacingS.w,
-                vertical: AppConstants.spacingS.h,
-              ),
-              child: Icon(
-                FontAwesomeIcons.spoon,
-                color: Colors.white,
-              ),
-            ),
-
-            SizedBox(width: AppConstants.spacingM.w,),
-
-            Column(
-              children: [
-                Text(
-                  AppStrings.appPrimaryTitle,
-                  style: TextStyle(
-                    fontSize: AppConstants.fontL.sp,
-                    color: Colors.white,
-                    fontWeight: .w700
-                  ),
-                ),
-
-                Text(
-                  AppStrings.appSecondaryTitle,
-                  style: TextStyle(
-                    fontSize: AppConstants.fontXS.sp,
-                    color: Colors.white,
-                    fontWeight: .w400
-                  ),
-                )
-              ],
-            )
+            _LogoAndAppName(),
+            _GPSSection(),
           ],
         ),
       ),
@@ -148,46 +122,76 @@ class _HeadingRow extends StatelessWidget {
   }
 }
 
-class _GPSStatusContainer extends StatelessWidget {
-  const _GPSStatusContainer();
+class _LogoAndAppName extends StatelessWidget {
+  const _LogoAndAppName();
 
   @override
   Widget build (BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(0xff1B222D),
-        borderRadius: .circular(AppConstants.radiusM.r),
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingM.w,
-            vertical: AppConstants.spacingM.h,
+    return Row(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.logoColor,
+            borderRadius: .circular(AppConstants.radiusM.r),
           ),
-          child: Row(
-            mainAxisAlignment: .spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.locationDot,
-                    color: Color(0xff209851),
-                    size: AppConstants.fontXXL.r,
-                    weight: AppConstants.borderMedium,
-                  ),
-                  SizedBox(width: AppConstants.spacingL.w,),
-                  _GPSStatus(
-                    status: EGpsStatus.enable,
-                  ),
-                ],
-              ),
-
-              _RefreshButton()
-            ]
+          padding: EdgeInsets.symmetric(
+            horizontal: AppConstants.spacingS.w,
+            vertical: AppConstants.spacingS.h,
+          ),
+          child: Icon(
+            FontAwesomeIcons.spoon,
+            color: Colors.white,
           ),
         ),
-      ),
+
+        SizedBox(width: AppConstants.spacingM.w,),
+
+        Column(
+          children: [
+            Text(
+              AppStrings.appPrimaryTitle,
+              style: TextStyle(
+                  fontSize: AppConstants.fontL.sp,
+                  color: Colors.white,
+                  fontWeight: .w700
+              ),
+            ),
+
+            Text(
+              AppStrings.appSecondaryTitle,
+              style: TextStyle(
+                  fontSize: AppConstants.fontXS.sp,
+                  color: Colors.white,
+                  fontWeight: .w400
+              ),
+            )
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _GPSSection extends StatelessWidget {
+  const _GPSSection();
+
+  @override
+  Widget build (BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          FontAwesomeIcons.locationDot,
+          color: Color(0xff209851),
+          size: AppConstants.fontXL.r,
+          weight: AppConstants.borderMedium,
+        ),
+        SizedBox(width: AppConstants.spacingXS.w,),
+        _GPSStatus(
+          status: EGpsStatus.enable,
+        ),
+        SizedBox(width: AppConstants.spacingS.w,),
+        _RefreshButton()
+      ],
     );
   }
 }
@@ -212,71 +216,16 @@ class _GPSStatus extends StatelessWidget {
         ? AppColors.disable
         : AppColors.connecting;
 
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              FontAwesomeIcons.wifi,
-              color: statusColor,
-              size: AppConstants.fontL.r,
-              weight: AppConstants.borderMedium,
-            ),
-            SizedBox(width: AppConstants.spacingM.w,),
-            Text(
-              "GPS $statusString",
-              style: TextStyle(
-                color: statusColor,
-                fontSize: AppConstants.fontL.sp,
-                fontWeight: .w700,
-              ),
-            )
-          ],
-        ),
-        SizedBox(height: AppConstants.spacingXS.h,),
-        Row(
-          children: [
-            Text(
-              "Chính xác",
-              style: TextStyle(
-                fontWeight: .w400,
-                fontSize: AppConstants.fontS.sp,
-                color: Colors.white
-              ),
-            ),
-            SizedBox(width: AppConstants.spacingS.w,),
-            Container(
-              width: 3.w,
-              height: 3.h,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-            ),
-            SizedBox(width: AppConstants.spacingXXS.w,),
-            Icon(
-              FontAwesomeIcons.plusMinus,
-              color: Colors.white,
-              size: AppConstants.fontXXS.r,
-              weight: AppConstants.borderThin,
-            ),
-            SizedBox(width: AppConstants.spacingXXS.w,),
-            Text(
-              "12ms",
-              style: TextStyle(
-                fontWeight: .w400,
-                fontSize: AppConstants.fontS.sp,
-                color: Colors.white
-              ),
-            )
-          ],
-        )
-      ],
+    return Text(
+      "GPS $statusString",
+      style: TextStyle(
+        color: statusColor,
+        fontSize: AppConstants.fontM.sp,
+        fontWeight: .w700,
+      ),
     );
   }
 }
-
 
 class _RefreshButton extends StatelessWidget {
   const _RefreshButton();
@@ -285,7 +234,7 @@ class _RefreshButton extends StatelessWidget {
   Widget build (BuildContext context) {
     return Icon(
       FontAwesomeIcons.rotate,
-      size: AppConstants.fontXXL.r,
+      size: AppConstants.fontXL.r,
       color: Colors.white,
       weight: AppConstants.borderMedium,
     );
