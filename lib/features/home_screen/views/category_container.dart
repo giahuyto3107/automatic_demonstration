@@ -283,10 +283,10 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
             SizedBox(
               width: double.infinity,
               child: Text(
-                "Khoảng cách",
+                "Khoảng cách (m)",
                 style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: .w500,
+                  fontSize: AppConstants.fontL.sp,
+                  fontWeight: .w600,
                   color: Colors.white,
                 ),
                 textAlign: .start,
@@ -306,8 +306,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
                     max: widget.maxDistance,
                     activeColor: Color(0xffF97015),
                     inactiveColor: Colors.white,
-                    divisions: ((widget.maxDistance - widget.minDistance) / 1)
-                        .toInt(),
+                    // divisions: ((widget.maxDistance - widget.minDistance) / 1).toInt(),
                     padding: EdgeInsets.zero,
                     labels: RangeLabels(
                       _selectedRange.start.toStringAsFixed(1),
@@ -382,6 +381,7 @@ class _MinMaxTextField extends StatelessWidget {
       width: double.infinity,
       child: Row(
         mainAxisAlignment: .spaceBetween,
+        crossAxisAlignment: .center,
         children: [
           Expanded(
             child: _TextFieldItem(
@@ -391,8 +391,12 @@ class _MinMaxTextField extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppConstants.spacingM.w),
-            child: Container(height: 2, width: 10, color: Colors.grey.shade600),
+            padding: EdgeInsets.only(
+              left: AppConstants.spacingM.w,
+              right: AppConstants.spacingM.w,
+              top: AppConstants.spacingL.h,
+            ),
+            child: Container(height: 2.h, width: 10.w, color: Colors.grey.shade600),
           ),
           Expanded(
             child: _TextFieldItem(

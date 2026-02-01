@@ -83,7 +83,7 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
           currentPage: _currentPage + 1,
           maxPage: widget.foodStallModels.length,
         ),
-        SizedBox(height: AppConstants.spacingM.h,)
+        SizedBox(height: AppConstants.spacingXS.h,)
       ],
     );
   }
@@ -429,9 +429,9 @@ class _PageIndicator extends StatelessWidget {
     return Text(
      "$currentPage/$maxPage",
      style: TextStyle(
-       fontSize: AppConstants.fontM.sp,
+       fontSize: AppConstants.fontL.sp,
        color: Colors.white,
-       fontWeight: .w400
+       fontWeight: .w700
      ),
     );
   }
