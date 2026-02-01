@@ -1,10 +1,7 @@
 import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
 import 'package:automatic_demonstration/features/home_screen/data/gps_enum.dart';
-import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
-import 'package:automatic_demonstration/features/home_screen/views/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/map_container.dart';
-import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -14,44 +11,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
-    List<FoodStallModel> foodStallModels = [
-      FoodStallModel(
-        foodStallName: "Green Garden Salads",
-        foodStallDescription: "Fresh organic salads and cold-pressed juices.",
-        distance: 450.5,
-        audioLength: 300,
-        foodStallImage: "assets/images/stalls/salad_stall.jpg",
-      ),
-      FoodStallModel(
-        foodStallName: "The Burger Hub",
-        foodStallDescription: "Juicy Wagyu burgers with homemade brioche buns.",
-        distance: 1200.0,
-        audioLength: 720,
-        foodStallImage: "assets/images/stalls/burger_hub.jpg",
-      ),
-      FoodStallModel(
-        foodStallName: "Sushi Zen",
-        foodStallDescription: "Authentic hand-rolled sushi and sashimi platters.",
-        distance: 850.0,
-        audioLength: 510,
-        foodStallImage: "assets/images/stalls/sushi_zen.jpg",
-      ),
-      FoodStallModel(
-        foodStallName: "Pasta la Vista",
-        foodStallDescription: "Freshly made Italian pasta with secret family sauces.",
-        distance: 2100.0,
-        audioLength: 1200,
-        foodStallImage: "assets/images/stalls/pasta_stall.jpg",
-      ),
-      FoodStallModel(
-        foodStallName: "Taco Fiesta",
-        foodStallDescription: "Spicy Mexican street tacos with zesty lime crema.",
-        distance: 300.0,
-        audioLength: 180,
-        foodStallImage: "assets/images/stalls/taco_fiesta.jpg",
-      ),
-    ];
-
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -77,16 +36,8 @@ class HomeScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             SizedBox(height: AppConstants.spacingL.h,),
-                            const _FoodStallListTitle(),
-                            SizedBox(height: AppConstants.spacingM.h,),
-                            const AudioCategoryContainer(
-                              foodStallListLength: 5,
-                            ),
-                            SizedBox(height: AppConstants.spacingM.h,),
                             Expanded(
-                              child: FoodStallListSection(
-                                foodStallModels: foodStallModels
-                              )
+                              child: FoodStallListSection()
                             ),
                           ],
                         ),
@@ -242,30 +193,6 @@ class _RefreshButton extends StatelessWidget {
       size: AppConstants.fontXL.r,
       color: Colors.white,
       weight: AppConstants.borderMedium,
-    );
-  }
-}
-
-class _FoodStallListTitle extends StatelessWidget {
-  const _FoodStallListTitle();
-
-  @override
-  Widget build (BuildContext context) {
-    final dataProvider = FoodStallDataProvider.of(context);
-    final foodStallCount = dataProvider?.foodStallModels.length ?? 0;
-
-    return Row(
-      mainAxisAlignment: .spaceBetween,
-      children: [
-        Text(
-          AppStrings.foodStallSectionTitle,
-          style: TextStyle(
-              fontSize: AppConstants.fontL.sp,
-              color: Colors.white,
-              fontWeight: .w700
-          ),
-        ),
-      ],
     );
   }
 }

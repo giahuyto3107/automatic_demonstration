@@ -10,6 +10,7 @@ class AppStrings {
 
   static const String playAudio = "Phát";
   static const String skipAudio = "Bỏ qua";
+  static const String restoreAudio = "Hoàn tác";
   static const String audioIsPlaying = "Đang phát thuyết minh";
   static const String audioIsStopped = "Đã tạm dừng";
 

@@ -1,14 +1,14 @@
 import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/views/audio_popup_modal.dart';
+import 'package:automatic_demonstration/features/home_screen/views/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class FoodStallListSection extends StatefulWidget {
-  final List<FoodStallModel> foodStallModels;
-  const FoodStallListSection({super.key, required this.foodStallModels});
+  const FoodStallListSection({super.key});
 
   @override
   State<FoodStallListSection> createState() => _FoodStallListSectionState();
@@ -18,12 +18,51 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
   late PageController _pageController;
   late List<bool> _allowFoodStallIndexes;
   int _currentPage = 0;
+  int _selectedCategoryIndex = 0;
+
+  List<FoodStallModel> foodStallModels = [
+    FoodStallModel(
+      foodStallName: "Green Garden Salads",
+      foodStallDescription: "Fresh organic salads and cold-pressed juices.",
+      distance: 450.5,
+      audioLength: 300,
+      foodStallImage: "assets/images/stalls/salad_stall.jpg",
+    ),
+    FoodStallModel(
+      foodStallName: "The Burger Hub",
+      foodStallDescription: "Juicy Wagyu burgers with homemade brioche buns.",
+      distance: 1200.0,
+      audioLength: 720,
+      foodStallImage: "assets/images/stalls/burger_hub.jpg",
+    ),
+    FoodStallModel(
+      foodStallName: "Sushi Zen",
+      foodStallDescription: "Authentic hand-rolled sushi and sashimi platters.",
+      distance: 850.0,
+      audioLength: 510,
+      foodStallImage: "assets/images/stalls/sushi_zen.jpg",
+    ),
+    FoodStallModel(
+      foodStallName: "Pasta la Vista",
+      foodStallDescription: "Freshly made Italian pasta with secret family sauces.",
+      distance: 2100.0,
+      audioLength: 1200,
+      foodStallImage: "assets/images/stalls/pasta_stall.jpg",
+    ),
+    FoodStallModel(
+      foodStallName: "Taco Fiesta",
+      foodStallDescription: "Spicy Mexican street tacos with zesty lime crema.",
+      distance: 300.0,
+      audioLength: 180,
+      foodStallImage: "assets/images/stalls/taco_fiesta.jpg",
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: 0.9);
-    _allowFoodStallIndexes = List.filled(widget.foodStallModels.length, true);
+    _allowFoodStallIndexes = List.filled(foodStallModels.length, true);
 
     _pageController.addListener(() {
       int next = _pageController.page?.round() ?? 0;
@@ -53,7 +92,7 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
           backgroundColor: Colors.transparent,
           builder: (BuildContext sheetContext) {
             return AudioPopupModal(
-              foodStallModel: widget.foodStallModels[index],
+              foodStallModel: foodStallModels[index],
             );
           }
       );
@@ -66,22 +105,67 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
     });
   }
 
+  void _onRestore(int index) {
+    setState(() {
+      _allowFoodStallIndexes[index] = true;
+    });
+  }
+
+  List<int> get visibleIndices {
+    switch(_selectedCategoryIndex) {
+      case 0:
+        return List.generate(foodStallModels.length, (index) => index)
+          .where((i) => _allowFoodStallIndexes[i])
+          .toList();
+      case 1:
+        return List.generate(foodStallModels.length, (i) => i)
+          .where((i) => !_allowFoodStallIndexes[i])
+          .toList();
+      default:
+        return List.generate(foodStallModels.length, (i) => i)
+          .where((i) => _allowFoodStallIndexes[i])
+          .toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const _FoodStallListTitle(),
+        SizedBox(height: AppConstants.spacingM.h,),
+        AudioCategoryContainer(
+          allCount: _allowFoodStallIndexes.where((allowed) => allowed).length,
+          listenedCount: _allowFoodStallIndexes.where((allowed) => !allowed).length,
+          onCategoryChanged: (int index) {
+            setState(() {
+              _selectedCategoryIndex = index;
+            });
+            // Only jump to page if PageController is attached (list not empty)
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_pageController.hasClients) {
+                _pageController.jumpToPage(0);
+              }
+            });
+          }
+        ),
+        SizedBox(height: AppConstants.spacingM.h,),
         Expanded(
           child: _FoodStallList(
-            models: widget.foodStallModels,
-            allowed: _allowFoodStallIndexes,
+            models: foodStallModels,
+            visibleIndices: visibleIndices,
+            allowedIndexes: _allowFoodStallIndexes,
             controller: _pageController,
             onPlay: _onPlay,
             onSkip: _onSkip,
+            onRestore: _onRestore,
           ),
         ),
         _PageIndicator(
-          currentPage: _currentPage + 1,
-          maxPage: widget.foodStallModels.length,
+          currentPage: visibleIndices.length == 0
+            ? 0
+            : _currentPage + 1,
+          maxPage: visibleIndices.length,
         ),
         SizedBox(height: AppConstants.spacingXS.h,)
       ],
@@ -89,37 +173,76 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
   }
 }
 
+class _FoodStallListTitle extends StatelessWidget {
+  const _FoodStallListTitle();
+
+  @override
+  Widget build (BuildContext context) {
+    return Row(
+      mainAxisAlignment: .spaceBetween,
+      children: [
+        Text(
+          AppStrings.foodStallSectionTitle,
+          style: TextStyle(
+            fontSize: AppConstants.fontL.sp,
+            color: Colors.white,
+            fontWeight: .w700
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _FoodStallList extends StatelessWidget {
   final List<FoodStallModel> models;
-  final List<bool> allowed;
+  final List<int> visibleIndices;
+  final List<bool> allowedIndexes;
   final PageController controller;
   final Function(int) onPlay;
   final Function(int) onSkip;
+  final Function(int) onRestore;
 
   const _FoodStallList({
     required this.models,
-    required this.allowed,
+    required this.visibleIndices,
+    required this.allowedIndexes,
     required this.controller,
     required this.onPlay,
     required this.onSkip,
+    required this.onRestore,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (visibleIndices.isEmpty) {
+      return Center(
+        child: Text(
+          'Không có quán nào',
+          style: TextStyle(
+            fontSize: AppConstants.fontL.sp,
+            color: Colors.white70,
+          ),
+        ),
+      );
+    }
+
     return PageView.builder(
       controller: controller,
-      itemCount: models.length,
+      itemCount: visibleIndices.length,
       itemBuilder: (context, index) {
-        if (!allowed[index]) return const SizedBox.shrink();
+        int originalIndex = visibleIndices[index];
+        bool isSkipped = !allowedIndexes[originalIndex];
 
         return Container(
           // Margin creates space outside the colored stall container
           margin: EdgeInsets.symmetric(horizontal: 12.0.w),
           child: FoodStallItemProvider(
-            index: index,
-            onPlayTap: () => onPlay(index),
-            onSkipTap: () => onSkip(index),
-            child: _FoodStallContainer(foodStallModel: models[index]),
+            index: originalIndex,
+            isSkipped: isSkipped,
+            onPlayTap: () => onPlay(originalIndex),
+            onSkipOrRestoreTap: () => isSkipped ? onRestore(originalIndex) : onSkip(originalIndex),
+            child: _FoodStallContainer(foodStallModel: models[originalIndex]),
           ),
         );
       },
@@ -378,31 +501,37 @@ class _ActionButtonsRow extends StatelessWidget {
         Expanded(
           flex: 5,
           child: GestureDetector(
-            onTap: provider.onSkipTap,
+            onTap: provider.onSkipOrRestoreTap,
             child: Container(
               height: height.h,
               decoration: BoxDecoration(
-                color: AppColors.skipButtonColor,
-                borderRadius: .circular(AppConstants.radiusM.r),
+                color: provider.isSkipped 
+                    ? AppColors.playButtonColor 
+                    : AppColors.skipButtonColor,
+                borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
               ),
               padding: EdgeInsets.symmetric(
                 horizontal: AppConstants.spacingL.w
               ),
               child: Row(
-                mainAxisAlignment: .center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    FontAwesomeIcons.forwardStep,
+                    provider.isSkipped 
+                        ? FontAwesomeIcons.rotateLeft 
+                        : FontAwesomeIcons.forwardStep,
                     color: AppColors.textOnDark,
                     size: AppConstants.fontS.r,
                   ),
                   SizedBox(width: AppConstants.spacingXS.w,),
                   Text(
-                    AppStrings.skipAudio,
+                    provider.isSkipped 
+                        ? AppStrings.restoreAudio 
+                        : AppStrings.skipAudio,
                     style: TextStyle(
                         fontSize: AppConstants.fontM.sp,
                         color: AppColors.textOnDark,
-                        fontWeight: .w400
+                        fontWeight: FontWeight.w400
                     ),
                   )
                 ],

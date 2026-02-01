@@ -4,8 +4,16 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AudioCategoryContainer extends StatefulWidget {
-  final int foodStallListLength;
-  const AudioCategoryContainer({super.key, required this.foodStallListLength});
+  final int allCount;
+  final int listenedCount;
+  final Function(int) onCategoryChanged;
+
+  const AudioCategoryContainer({
+    super.key,
+    required this.allCount,
+    required this.listenedCount,
+    required this.onCategoryChanged,
+  });
 
   @override
   State<AudioCategoryContainer> createState() => _AudioCategoryContainerState();
@@ -44,6 +52,8 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
     });
     if (index == 2) {
       _showDistanceFilterDropdown();
+    } else {
+      widget.onCategoryChanged(index);
     }
   }
 
@@ -56,9 +66,6 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
             child: GestureDetector(
               onTap: () {
                 _removeOverlay();
-                setState(() {
-                  selectedIndex = 0;
-                });
               },
               child: Container(color: Colors.transparent),
             ),
@@ -87,9 +94,6 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
                       _selectedMaxDistance = maxDistance;
                     });
                     _removeOverlay();
-                    setState(() {
-                      selectedIndex = 0;
-                    });
                   },
                 ),
               ),
@@ -107,6 +111,18 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
     List<String> audioCategoryItems = ['Tất cả', 'Đã nghe', 'Lọc'];
     int lastCategoryItemIndex = audioCategoryItems.length - 1;
 
+    // Get count for each category
+    int getCountForIndex(int index) {
+      switch (index) {
+        case 0:
+          return widget.allCount;
+        case 1:
+          return widget.listenedCount;
+        default:
+          return 0;
+      }
+    }
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: Container(
@@ -122,11 +138,8 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
 
             bool isSelected = selectedIndex == index;
             bool isLastCategoryItem = index == lastCategoryItemIndex;
-            bool isDefaultCategoryItem = index == 0;
 
-            int listNumber = isDefaultCategoryItem
-              ? widget.foodStallListLength
-              : 0;
+            int listNumber = getCountForIndex(index);
 
             Widget itemContent = Text(
               isLastCategoryItem ? item : "$item ($listNumber)",
@@ -135,7 +148,7 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
                 color: isSelected ? Colors.white : const Color(0xff000000),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w400,
               ),
-              textAlign: .center,
+              textAlign: TextAlign.center,
             );
 
             return Expanded(
