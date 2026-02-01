@@ -10,11 +10,13 @@ import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 class MapContainer extends StatefulWidget {
   const MapContainer({super.key});
 
+  static final GlobalKey<MapContainerState> globalKey = GlobalKey<MapContainerState>();
+
   @override
-  State<MapContainer> createState() => _MapContainerState();
+  State<MapContainer> createState() => MapContainerState();
 }
 
-class _MapContainerState extends State<MapContainer> {
+class MapContainerState extends State<MapContainer> {
   VietmapController? _mapController;
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStreamSubscription;
@@ -51,7 +53,7 @@ class _MapContainerState extends State<MapContainer> {
     );
   }
 
-  Future<void> _startLiveTracking() async {
+  Future<void> startLiveTracking() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -133,7 +135,7 @@ class _MapContainerState extends State<MapContainer> {
                 setState(() {
                   _mapController = controller;
                 });
-                _startLiveTracking();
+                startLiveTracking();
               },
 
               myLocationEnabled: true,
