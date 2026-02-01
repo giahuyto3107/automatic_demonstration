@@ -9,8 +9,11 @@ class AppStrings {
   static const String gpsIsOn = "GPS Bật";
 
   static const String playAudio = "Phát";
+  static const String skipAudio = "Bỏ qua";
   static const String audioIsPlaying = "Đang phát thuyết minh";
   static const String audioIsStopped = "Đã tạm dừng";
+
+  static const String confirmButton = "Xác nhận";
 
   static const String userCurrentLocation = "Vị trí của bạn";
 }

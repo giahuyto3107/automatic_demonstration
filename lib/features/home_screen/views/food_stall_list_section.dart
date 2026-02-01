@@ -70,7 +70,6 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const _FoodStallListTitle(),
         Expanded(
           child: _FoodStallList(
             models: widget.foodStallModels,
@@ -85,49 +84,6 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
           maxPage: widget.foodStallModels.length,
         ),
         SizedBox(height: AppConstants.spacingM.h,)
-      ],
-    );
-  }
-}
-
-class _FoodStallListTitle extends StatelessWidget {
-  const _FoodStallListTitle();
-
-  @override
-  Widget build (BuildContext context) {
-    final dataProvider = FoodStallDataProvider.of(context);
-    final foodStallCount = dataProvider?.foodStallModels.length ?? 0;
-
-    return Row(
-      mainAxisAlignment: .spaceBetween,
-      children: [
-        Text(
-          AppStrings.foodStallSectionTitle,
-          style: TextStyle(
-            fontSize: AppConstants.fontL.sp,
-            color: Colors.white,
-            fontWeight: .w700
-          ),
-        ),
-
-        Container(
-          decoration: BoxDecoration(
-            color: Color(0xff1F2933),
-            borderRadius: .circular(AppConstants.radiusXL.r),
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingL.w,
-            vertical: AppConstants.spacingS.h,
-          ),
-          child: Text(
-            "$foodStallCount địa điểm",
-            style: TextStyle(
-              fontSize: AppConstants.fontS.sp,
-              color: Colors.white,
-              fontWeight: .w400
-            ),
-          ),
-        )
       ],
     );
   }
@@ -432,10 +388,24 @@ class _ActionButtonsRow extends StatelessWidget {
               padding: EdgeInsets.symmetric(
                 horizontal: AppConstants.spacingL.w
               ),
-              child: Icon(
-                FontAwesomeIcons.forwardStep,
-                color: AppColors.textOnDark,
-                size: AppConstants.fontS.r,
+              child: Row(
+                mainAxisAlignment: .center,
+                children: [
+                  Icon(
+                    FontAwesomeIcons.forwardStep,
+                    color: AppColors.textOnDark,
+                    size: AppConstants.fontS.r,
+                  ),
+                  SizedBox(width: AppConstants.spacingXS.w,),
+                  Text(
+                    AppStrings.skipAudio,
+                    style: TextStyle(
+                        fontSize: AppConstants.fontM.sp,
+                        color: AppColors.textOnDark,
+                        fontWeight: .w400
+                    ),
+                  )
+                ],
               ),
             ),
           ),

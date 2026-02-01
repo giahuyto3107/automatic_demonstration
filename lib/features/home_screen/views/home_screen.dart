@@ -4,6 +4,7 @@ import 'package:automatic_demonstration/features/home_screen/data/models/food_st
 import 'package:automatic_demonstration/features/home_screen/views/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/map_container.dart';
+import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -76,7 +77,11 @@ class HomeScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             SizedBox(height: AppConstants.spacingL.h,),
-                            const AudioCategoryContainer(),
+                            const _FoodStallListTitle(),
+                            SizedBox(height: AppConstants.spacingM.h,),
+                            const AudioCategoryContainer(
+                              foodStallListLength: 5,
+                            ),
                             SizedBox(height: AppConstants.spacingM.h,),
                             Expanded(
                               child: FoodStallListSection(
@@ -107,7 +112,7 @@ class _HeadingRow extends StatelessWidget {
       color: Color(0xff252238),
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: AppConstants.spacingL.h,
+          horizontal: AppConstants.spacingM.h,
           vertical: AppConstants.spacingL.h,
         ),
         child: Row(
@@ -237,6 +242,30 @@ class _RefreshButton extends StatelessWidget {
       size: AppConstants.fontXL.r,
       color: Colors.white,
       weight: AppConstants.borderMedium,
+    );
+  }
+}
+
+class _FoodStallListTitle extends StatelessWidget {
+  const _FoodStallListTitle();
+
+  @override
+  Widget build (BuildContext context) {
+    final dataProvider = FoodStallDataProvider.of(context);
+    final foodStallCount = dataProvider?.foodStallModels.length ?? 0;
+
+    return Row(
+      mainAxisAlignment: .spaceBetween,
+      children: [
+        Text(
+          AppStrings.foodStallSectionTitle,
+          style: TextStyle(
+              fontSize: AppConstants.fontL.sp,
+              color: Colors.white,
+              fontWeight: .w700
+          ),
+        ),
+      ],
     );
   }
 }

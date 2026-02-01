@@ -1,18 +1,107 @@
-import 'package:automatic_demonstration/core/utils/app_colors.dart';
-import 'package:automatic_demonstration/core/utils/app_constants.dart';
+import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AudioCategoryContainer extends StatefulWidget {
-  const AudioCategoryContainer({super.key});
+  final int foodStallListLength;
+  const AudioCategoryContainer({
+    super.key,
+    required this.foodStallListLength,
+  });
 
   @override
   State<AudioCategoryContainer> createState() => _AudioCategoryContainerState();
 }
 
 class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
+  final GlobalKey _rangeButtonKey = GlobalKey();
   int selectedIndex = 0;
+  double _minDistance = 0;
+  double _maxDistance = 50;
+  late double _selectedMinDistance;
+  late double _selectedMaxDistance;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _selectedMinDistance = _minDistance;
+    _selectedMaxDistance = _maxDistance;
+  }
+
+  void _onTap(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+
+    // Last index
+    if (index == 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showDistanceFilterDropdown();
+      });
+    }
+  }
+
+  void _showDistanceFilterDropdown() {
+    if (_rangeButtonKey.currentContext == null) {
+      return;
+    }
+
+    final RenderBox renderBox = _rangeButtonKey
+        .currentContext!
+        .findRenderObject() as RenderBox;
+    final position = renderBox.localToGlobal(Offset.zero);
+    // final size = renderBox.size;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Stack(
+          children: [
+            // Tap outside to close
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    selectedIndex = 0;
+                  });
+                },
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            // Dropdown positioned below the Range button
+            Positioned(
+              top: position.dy.h - 80.h,
+              left: AppConstants.spacingL.h, // Adjust positioning
+              right: AppConstants.spacingL.h,
+              child: Material(
+                color: Colors.transparent,
+                child: DistanceFilterDropdown(
+                  minDistance: _minDistance,
+                  maxDistance: _maxDistance,
+                  selectedMinDistance: _selectedMinDistance,
+                  selectedMaxDistance: _selectedMaxDistance,
+                  onConfirm: (double minDistance, double maxDistance) {
+                    setState(() {
+                      _selectedMinDistance = minDistance;
+                      _selectedMaxDistance = maxDistance;
+                    });
+                    Navigator.pop(context);
+                    setState(() {
+                      selectedIndex = 0;
+                    });
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build (BuildContext context) {
@@ -36,9 +125,13 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
 
           bool isSelected = selectedIndex == index;
           bool isLastCategoryItem = index == lastCategoryItemIndex;
+          bool isDefaultCategoryItem = index == 0;
+
+          int listNumber = isDefaultCategoryItem ? widget.foodStallListLength : 0;
 
           Widget itemContent = Text(
-            item,
+            isLastCategoryItem ? item
+            : "$item ($listNumber)",
             style: TextStyle(
               fontSize: AppConstants.fontM.sp,
               color: isSelected ? Colors.white : const Color(0xff000000),
@@ -49,12 +142,9 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
 
           return Expanded(
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedIndex = index;
-                });
-              },
+              onTap: () => _onTap(index),
               child: Container(
+                key: isLastCategoryItem ? _rangeButtonKey : null,
                 padding: EdgeInsets.symmetric(
                   vertical: AppConstants.spacingXS.h,
                 ),
@@ -75,9 +165,299 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
                   ],
                 ) : itemContent
               ),
-            ),
+            )
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+class DistanceFilterDropdown extends StatefulWidget {
+  final double minDistance;
+  final double maxDistance;
+  final double selectedMinDistance;
+  final double selectedMaxDistance;
+  final Function(double, double) onConfirm;
+
+  const DistanceFilterDropdown({
+    super.key,
+    required this.minDistance,
+    required this.maxDistance,
+    required this.selectedMinDistance,
+    required this.selectedMaxDistance,
+    required this.onConfirm,
+  });
+
+  @override
+  State<DistanceFilterDropdown> createState() => _DistanceFilterDropdownState();
+}
+
+class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
+  late RangeValues _selectedRange;
+
+  late TextEditingController _minController;
+  late TextEditingController _maxController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRange = RangeValues(widget.selectedMinDistance, widget.selectedMaxDistance);
+
+    _minController = TextEditingController(text: widget.selectedMinDistance.toStringAsFixed(1));
+    _maxController = TextEditingController(text: widget.selectedMaxDistance.toStringAsFixed(1));
+  }
+
+  @override
+  void dispose() {
+    _minController.dispose();
+    _maxController.dispose();
+    super.dispose();
+  }
+
+  void _onSliderChanged(RangeValues newRange) {
+    setState(() {
+      _selectedRange = newRange;
+      _minController.text = newRange.start.toStringAsFixed(1);
+      _maxController.text = newRange.end.toStringAsFixed(1);
+    });
+  }
+
+  void _onMinTextChanged(String value) {
+    final double? newMin = double.tryParse(value);
+    if (newMin != null) {
+      // Validation: Must be within global bounds and less than current Max
+      if (newMin >= widget.minDistance && newMin <= _selectedRange.end) {
+        setState(() {
+          _selectedRange = RangeValues(newMin, _selectedRange.end);
+        });
+      }
+    }
+  }
+
+  void _onMaxTextChanged(String value) {
+    final double? newMax = double.tryParse(value);
+    if (newMax != null) {
+      // Validation: Must be within global bounds and greater than current Min
+      if (newMax <= widget.maxDistance && newMax >= _selectedRange.start) {
+        setState(() {
+          _selectedRange = RangeValues(_selectedRange.start, newMax);
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 300.w,
+      decoration: BoxDecoration(
+        color: Color(0xff1F2933),
+        borderRadius: BorderRadius.circular(12.sp),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(38),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(AppConstants.spacingL.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: .center,
+          children: [
+            // Start Date and End Date
+            SizedBox(
+              width: double.infinity,
+              child: Text(
+                "Khoảng cách",
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: .w500,
+                  color: Colors.white,
+                ),
+                textAlign: .start,
+              ),
+            ),
+
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppConstants.spacingM.w,
+                vertical: AppConstants.spacingM.h,
+              ),
+              child: Column(
+                children: [
+                  RangeSlider(
+                    values: _selectedRange,
+                    min: widget.minDistance,
+                    max: widget.maxDistance,
+                    activeColor: Color(0xffF97015),
+                    inactiveColor: Colors.white,
+                    divisions: ((widget.maxDistance - widget.minDistance) / 1).toInt(),
+                    padding: EdgeInsets.zero,
+                    labels: RangeLabels(
+                      _selectedRange.start.toStringAsFixed(1),
+                      _selectedRange.end.toStringAsFixed(1),
+                    ),
+                    onChanged: (RangeValues newRange) => _onSliderChanged(newRange)
+                  ),
+
+                  Row(
+                    mainAxisAlignment: .spaceBetween,
+                    children: [
+                      Text(
+                        widget.minDistance.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: AppConstants.fontS.sp,
+                          fontWeight: .w400,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        widget.maxDistance.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: AppConstants.fontS.sp,
+                          fontWeight: .w400,
+                          color: Colors.white,
+                        ),
+                      )
+                    ],
+                  ),
+
+                  _MinMaxTextField(
+                    minController: _minController,
+                    maxController: _maxController,
+                    onMinChanged: _onMinTextChanged,
+                    onMaxChanged: _onMaxTextChanged,
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: AppConstants.spacingM.h,),
+            GestureDetector(
+              onTap: () {
+                widget.onConfirm(_selectedRange.start, _selectedRange.end);
+              },
+              child: const _ConfirmButton()
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MinMaxTextField extends StatelessWidget {
+  final TextEditingController minController;
+  final TextEditingController maxController;
+  final Function(String) onMinChanged;
+  final Function(String) onMaxChanged;
+
+  const _MinMaxTextField({
+    required this.minController,
+    required this.maxController,
+    required this.onMinChanged,
+    required this.onMaxChanged,
+  });
+
+  @override
+  Widget build (BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: .spaceBetween,
+        children: [
+          Expanded(
+            child: _TextFieldItem(
+              label: "Min",
+              controller: minController,
+              onChanged: onMinChanged,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppConstants.spacingM.w),
+            child: Container(
+                height: 2,
+                width: 10,
+                color: Colors.grey.shade600
+            ),
+          ),
+          Expanded(
+            child: _TextFieldItem(
+              label: "Max",
+              controller: maxController,
+              onChanged: onMaxChanged,
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _TextFieldItem extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final Function(String) onChanged;
+
+  const _TextFieldItem({
+    required this.label,
+    required this.controller,
+    required this.onChanged
+  });
+
+  @override
+  Widget build (BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        keyboardType: .number,
+        decoration: InputDecoration(
+          labelText: label,
+          contentPadding: EdgeInsets.zero
+        ),
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: AppConstants.fontS.sp,
+          fontWeight: FontWeight.w400
+        ),
+        textAlign: .center,
+      ),
+    );
+  }
+}
+
+class _ConfirmButton extends StatelessWidget {
+  const _ConfirmButton();
+
+  @override
+  Widget build (BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Color(0xffF97015),
+          borderRadius: BorderRadius.circular(AppConstants.radiusCircular.sp),
+        ),
+        padding: EdgeInsets.symmetric(
+          vertical: AppConstants.spacingS.h,
+        ),
+        child: Text(
+          AppStrings.confirmButton,
+          style: TextStyle(
+            fontSize: AppConstants.fontM.sp,
+            fontWeight: .w600,
+            color: Colors.white,
+          ),
+          textAlign: .center,
+        ),
       ),
     );
   }
