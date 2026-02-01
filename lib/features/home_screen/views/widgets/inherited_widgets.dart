@@ -24,14 +24,16 @@ class FoodStallDataProvider extends InheritedWidget {
 
 class FoodStallItemProvider extends InheritedWidget {
   final int index;
+  final bool isSkipped;
   final VoidCallback onPlayTap;
-  final VoidCallback onSkipTap;
+  final VoidCallback onSkipOrRestoreTap;
 
   const FoodStallItemProvider({
     super.key,
     required this.index,
+    required this.isSkipped,
     required this.onPlayTap,
-    required this.onSkipTap,
+    required this.onSkipOrRestoreTap,
     required super.child,
   });
 
@@ -43,7 +45,8 @@ class FoodStallItemProvider extends InheritedWidget {
   bool updateShouldNotify(FoodStallItemProvider oldWidget) {
     // Rebuild if the index changes (unlikely in a stable list) or callbacks change
     return index != oldWidget.index ||
+      isSkipped != oldWidget.isSkipped ||
       onPlayTap != oldWidget.onPlayTap ||
-      onSkipTap != oldWidget.onSkipTap;
+      onSkipOrRestoreTap != oldWidget.onSkipOrRestoreTap;
   }
 }
