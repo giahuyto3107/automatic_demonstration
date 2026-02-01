@@ -473,7 +473,7 @@ class _ActionButtonsRow extends StatelessWidget {
                 borderRadius: .circular(AppConstants.radiusM.r),
               ),
               padding: EdgeInsets.symmetric(
-                horizontal: AppConstants.spacingL.w,
+                horizontal: AppConstants.spacingM.w
               ),
               child: Row(
                 mainAxisAlignment: .center,
@@ -497,7 +497,7 @@ class _ActionButtonsRow extends StatelessWidget {
             ),
           ),
         ),
-
+        SizedBox(width: AppConstants.spacingS.w,),
         Expanded(
           flex: 5,
           child: GestureDetector(
@@ -511,7 +511,7 @@ class _ActionButtonsRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
               ),
               padding: EdgeInsets.symmetric(
-                horizontal: AppConstants.spacingL.w
+                horizontal: AppConstants.spacingM.w
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
