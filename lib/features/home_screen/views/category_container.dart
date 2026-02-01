@@ -296,7 +296,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: AppConstants.spacingM.w,
-                vertical: AppConstants.spacingM.h,
+                vertical: AppConstants.spacingXS.h,
               ),
               child: Column(
                 children: [
@@ -338,7 +338,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
                       ),
                     ],
                   ),
-
+                  SizedBox(height: AppConstants.spacingXXS.h),
                   _MinMaxTextField(
                     minController: _minController,
                     maxController: _maxController,
@@ -349,7 +349,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
               ),
             ),
 
-            SizedBox(height: AppConstants.spacingM.h),
+            SizedBox(height: AppConstants.spacingS.h),
             GestureDetector(
               onTap: () {
                 widget.onConfirm(_selectedRange.start, _selectedRange.end);
@@ -420,23 +420,52 @@ class _TextFieldItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        keyboardType: .number,
-        decoration: InputDecoration(
-          labelText: label,
-          contentPadding: EdgeInsets.zero,
+    final outlineBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.r),
+      borderSide: BorderSide(color: Colors.grey.shade700, width: 1),
+    );
+
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.r),
+      borderSide: const BorderSide(color: Color(0xffF97015), width: 1.5),
+    );
+
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: AppConstants.fontS.sp,
+              fontWeight: FontWeight.w500
+          ),
         ),
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: AppConstants.fontS.sp,
-          fontWeight: FontWeight.w400,
+        SizedBox(height: AppConstants.spacingXXS.h),
+
+        Container(
+          decoration: BoxDecoration(),
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            keyboardType: .number,
+            decoration: InputDecoration(
+              contentPadding: EdgeInsets.zero,
+              filled: true,
+              fillColor: const Color(0xff2E3A44), // Slightly lighter than background
+              enabledBorder: outlineBorder,
+              focusedBorder: focusedBorder,
+              hintText: "0.0",
+              hintStyle: TextStyle(color: Colors.grey.shade600),
+            ),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: AppConstants.fontS.sp,
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: .center,
+          ),
         ),
-        textAlign: .center,
-      ),
+      ],
     );
   }
 }
