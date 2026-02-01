@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: 3,
-                      child: const MapContainer()
+                      child: MapContainer(key: MapContainer.globalKey)
                     ),
                     Expanded(
                       flex: 7,
@@ -188,11 +188,16 @@ class _RefreshButton extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
-    return Icon(
-      FontAwesomeIcons.rotate,
-      size: AppConstants.fontXL.r,
-      color: Colors.white,
-      weight: AppConstants.borderMedium,
+    return GestureDetector(
+      onTap: () {
+        MapContainer.globalKey.currentState?.startLiveTracking();
+      },
+      child: Icon(
+        FontAwesomeIcons.rotate,
+        size: AppConstants.fontXL.r,
+        color: Colors.white,
+        weight: AppConstants.borderMedium,
+      ),
     );
   }
 }
