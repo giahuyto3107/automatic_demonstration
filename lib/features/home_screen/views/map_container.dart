@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:automatic_demonstration/core/config/config.dart';
 import 'package:automatic_demonstration/core/utils/app_constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
@@ -108,7 +108,7 @@ class MapContainerState extends State<MapContainer> {
 
   @override
   Widget build (BuildContext context) {
-    final apiKey = dotenv.env['API_KEY'] ?? '';
+    final apiKey = EnvConfig.apiKey;
     // final apiKey = '';
 
     return SizedBox(
