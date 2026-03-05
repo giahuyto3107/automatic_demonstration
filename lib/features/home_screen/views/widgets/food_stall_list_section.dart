@@ -1,7 +1,8 @@
-import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
+import 'package:automatic_demonstration/core/constants/constants.dart';
+import 'package:automatic_demonstration/core/theme/theme.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
-import 'package:automatic_demonstration/features/home_screen/views/audio_popup_modal.dart';
-import 'package:automatic_demonstration/features/home_screen/views/category_container.dart';
+import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
+import 'package:automatic_demonstration/features/home_screen/views/widgets/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,41 +21,43 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
   int _currentPage = 0;
   int _selectedCategoryIndex = 0;
 
+  // Tính distance cho các quán ăn trong initState
+
   List<FoodStallModel> foodStallModels = [
     FoodStallModel(
-      foodStallName: "Green Garden Salads",
-      foodStallDescription: "Fresh organic salads and cold-pressed juices.",
+      name: "Green Garden Salads",
+      description: "Fresh organic salads and cold-pressed juices.",
       distance: 450.5,
-      audioLength: 300,
-      foodStallImage: "assets/images/stalls/salad_stall.jpg",
+      audioDuration: 300,
+      imageUrl: "assets/images/stalls/salad_stall.jpg",
     ),
     FoodStallModel(
-      foodStallName: "The Burger Hub",
-      foodStallDescription: "Juicy Wagyu burgers with homemade brioche buns.",
+      name: "The Burger Hub",
+      description: "Juicy Wagyu burgers with homemade brioche buns.",
       distance: 1200.0,
-      audioLength: 720,
-      foodStallImage: "assets/images/stalls/burger_hub.jpg",
+      audioDuration: 720,
+      imageUrl: "assets/images/stalls/burger_hub.jpg",
     ),
     FoodStallModel(
-      foodStallName: "Sushi Zen",
-      foodStallDescription: "Authentic hand-rolled sushi and sashimi platters.",
+      name: "Sushi Zen",
+      description: "Authentic hand-rolled sushi and sashimi platters.",
       distance: 850.0,
-      audioLength: 510,
-      foodStallImage: "assets/images/stalls/sushi_zen.jpg",
+      audioDuration: 510,
+      imageUrl: "assets/images/stalls/sushi_zen.jpg",
     ),
     FoodStallModel(
-      foodStallName: "Pasta la Vista",
-      foodStallDescription: "Freshly made Italian pasta with secret family sauces.",
+      name: "Pasta la Vista",
+      description: "Freshly made Italian pasta with secret family sauces.",
       distance: 2100.0,
-      audioLength: 1200,
-      foodStallImage: "assets/images/stalls/pasta_stall.jpg",
+      audioDuration: 1200,
+      imageUrl: "assets/images/stalls/pasta_stall.jpg",
     ),
     FoodStallModel(
-      foodStallName: "Taco Fiesta",
-      foodStallDescription: "Spicy Mexican street tacos with zesty lime crema.",
+      name: "Taco Fiesta",
+      description: "Spicy Mexican street tacos with zesty lime crema.",
       distance: 300.0,
-      audioLength: 180,
-      foodStallImage: "assets/images/stalls/taco_fiesta.jpg",
+      audioDuration: 180,
+      imageUrl: "assets/images/stalls/taco_fiesta.jpg",
     ),
   ];
 
@@ -162,7 +165,7 @@ class _FoodStallListSectionState extends State<FoodStallListSection> {
           ),
         ),
         _PageIndicator(
-          currentPage: visibleIndices.length == 0
+          currentPage: visibleIndices.isEmpty
             ? 0
             : _currentPage + 1,
           maxPage: visibleIndices.length,
@@ -274,10 +277,10 @@ class _FoodStallContainer extends StatelessWidget {
           Expanded(
             flex: 6,
             child: _FoodStallLowerContainer(
-              distance: foodStallModel.distance,
-              audioLength: foodStallModel.audioLength,
-              foodStallDescription: foodStallModel.foodStallDescription,
-              foodStallName: foodStallModel.foodStallName,
+              distance: foodStallModel.distance!,
+              audioDuration: foodStallModel.audioDuration,
+              description: foodStallModel.description,
+              name: foodStallModel.name,
             ),
           ),
         ],
@@ -323,7 +326,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                "${foodStallModel.distance.toStringAsFixed(1)}m",
+                "${foodStallModel.distance!.toStringAsFixed(1)}m",
                 style: TextStyle(
                   fontWeight: .w500,
                   fontSize: AppConstants.fontXS.sp,
@@ -339,16 +342,16 @@ class _FoodStallUpperContainer extends StatelessWidget {
 }
 
 class _FoodStallLowerContainer extends StatelessWidget {
-  final String foodStallName;
-  final String foodStallDescription;
+  final String name;
+  final String description;
   final double distance;
-  final int audioLength;
+  final int audioDuration;
 
   const _FoodStallLowerContainer({
-    required this.foodStallName,
-    required this.foodStallDescription,
+    required this.name,
+    required this.description,
     required this.distance,
-    required this.audioLength,
+    required this.audioDuration,
   });
 
   @override
@@ -369,7 +372,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
           mainAxisAlignment: .center,
           children: [
             Text(
-              foodStallName,
+              name,
               style: TextStyle(
                 fontSize: AppConstants.fontL.sp,
                 color: AppColors.textOnDark,
@@ -378,7 +381,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
             ),
             SizedBox(height: AppConstants.spacingXXS.h,),
             Text(
-              foodStallName,
+              name,
               style: TextStyle(
                 fontSize: AppConstants.fontM.sp,
                 color: AppColors.textOnDark,
@@ -390,7 +393,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
 
             _TimeAndSpaceDistanceRow(
               distance: distance,
-              audioLength: audioLength,
+              audioDuration: audioDuration,
             ),
             SizedBox(height: AppConstants.spacingS.h,),
             _ActionButtonsRow()
@@ -403,11 +406,11 @@ class _FoodStallLowerContainer extends StatelessWidget {
 
 class _TimeAndSpaceDistanceRow extends StatelessWidget {
   final double distance;
-  final int audioLength;
+  final int audioDuration;
 
   const _TimeAndSpaceDistanceRow({
     required this.distance,
-    required this.audioLength,
+    required this.audioDuration,
   });
 
   @override
@@ -438,7 +441,7 @@ class _TimeAndSpaceDistanceRow extends StatelessWidget {
         ),
         SizedBox(width: AppConstants.spacingXS.w,),
         Text(
-          "${audioLength}s",
+          "${audioDuration}s",
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
             color: AppColors.textOnDark,

@@ -1,7 +1,9 @@
-import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
+import 'package:automatic_demonstration/core/constants/app_constants.dart';
+import 'package:automatic_demonstration/core/constants/app_strings.dart';
+import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/features/home_screen/data/gps_enum.dart';
-import 'package:automatic_demonstration/features/home_screen/views/food_stall_list_section.dart';
-import 'package:automatic_demonstration/features/home_screen/views/map_container.dart';
+import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
+import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

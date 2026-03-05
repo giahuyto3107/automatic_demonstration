@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:automatic_demonstration/core/config/config.dart';
-import 'package:automatic_demonstration/core/utils/app_constants.dart';
+import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';

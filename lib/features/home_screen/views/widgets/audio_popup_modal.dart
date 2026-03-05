@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
+import 'package:automatic_demonstration/core/utils/utils.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:automatic_demonstration/core/utils/time_converter.dart';
+import 'package:automatic_demonstration/core/constants/constants.dart';
+import 'package:automatic_demonstration/core/theme/theme.dart';
 
 class AudioPopupModal extends StatefulWidget {
   final FoodStallModel foodStallModel;
@@ -54,7 +56,7 @@ class _AudioPopupModalState extends State<AudioPopupModal> {
               SizedBox(height: AppConstants.spacingS.h,),
               _AudioSlider(
                 foodStallModel: widget.foodStallModel,
-                maximumTimelineSec: widget.foodStallModel.audioLength,
+                // maximumTimelineSec: widget.foodStallModel.audioLength,
                 isPlaying: isPlaying
               ),
               SizedBox(height: AppConstants.spacingXS.h,),
@@ -97,7 +99,7 @@ class _ModalHeading extends StatelessWidget {
           crossAxisAlignment: .start,
           children: [
             Text(
-              foodStallModel.foodStallName,
+              foodStallModel.name,
               style: TextStyle(
                 fontSize: AppConstants.fontM.sp,
                 color: AppColors.textOnDark,
@@ -137,7 +139,7 @@ class _AudioSlider extends StatefulWidget {
 
   const _AudioSlider({
     required this.foodStallModel,
-    required this.maximumTimelineSec,
+    this.maximumTimelineSec = 0,
     required this.isPlaying,
   });
 
@@ -327,7 +329,7 @@ class _TextContainer extends StatelessWidget {
         vertical: AppConstants.spacingM.h,
       ),
       child: Text(
-        foodStallModel.foodStallDescription,
+        foodStallModel.description,
         style: TextStyle(
           fontWeight: .w400,
           fontSize: AppConstants.spacingM.sp,

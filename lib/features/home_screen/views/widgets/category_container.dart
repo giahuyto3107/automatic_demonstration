@@ -1,7 +1,9 @@
-import 'package:automatic_demonstration/core/utils/app_constants_all.dart';
+import 'package:automatic_demonstration/core/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:automatic_demonstration/core/constants/constants.dart';
+import 'package:automatic_demonstration/core/theme/theme.dart';
 
 class AudioCategoryContainer extends StatefulWidget {
   final int allCount;

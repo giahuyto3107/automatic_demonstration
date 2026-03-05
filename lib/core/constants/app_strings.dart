@@ -8,7 +8,7 @@ class AppStrings {
   static const String gpsIsOff = "GPS Tắt";
   static const String gpsIsOn = "GPS Bật";
 
-  static const String playAudio = "Phát";
+  static const String playAudio = "Nghe thuyết minh";
   static const String skipAudio = "Bỏ qua";
   static const String restoreAudio = "Hoàn tác";
   static const String audioIsPlaying = "Đang phát thuyết minh";
@@ -17,4 +17,17 @@ class AppStrings {
   static const String confirmButton = "Xác nhận";
 
   static const String userCurrentLocation = "Vị trí của bạn";
+
+  static const String location = "địa điểm";
+
+  static const String all = "Tất cả";
+  static const String listened = "Đã nghe";
+  static const String filter = "Lọc";
+
+  static const String min = "Tối thiểu";
+  static const String max = "Tối đa";
+  static const String confirm = "Xác nhận";
+
+  static const String home = "Trang chủ";
+  static const String settings = "Cài đặt";
 }
