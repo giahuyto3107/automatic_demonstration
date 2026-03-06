@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/core/utils/utils.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,8 @@ class _AudioPopupModalState extends State<AudioPopupModal> {
 
   @override
   Widget build (BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: 36.w,
@@ -39,7 +42,7 @@ class _AudioPopupModalState extends State<AudioPopupModal> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xff2E3A44),
+          color: surfaceColors.secondarySurface,
           borderRadius: .circular(AppConstants.radiusM.r)
         ),
         child: Padding(
@@ -89,7 +92,7 @@ class _ModalHeading extends StatelessWidget {
       children: [
         Icon(
           Icons.coffee,
-          color: AppColors.textOnDark,
+          color: Theme.of(context).textTheme.bodyMedium?.color,
           size: AppConstants.spacingXXXL.r,
         ),
 
@@ -102,7 +105,7 @@ class _ModalHeading extends StatelessWidget {
               foodStallModel.name,
               style: TextStyle(
                 fontSize: AppConstants.fontM.sp,
-                color: AppColors.textOnDark,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: .w700
               ),
             ),
@@ -111,7 +114,7 @@ class _ModalHeading extends StatelessWidget {
               children: [
                 Icon(
                   FontAwesomeIcons.volumeHigh,
-                  color: AppColors.textOnDark,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   size: AppConstants.fontXS.r,
                 ),
                 SizedBox(width: AppConstants.spacingS.w,),
@@ -119,7 +122,7 @@ class _ModalHeading extends StatelessWidget {
                   AppStrings.audioIsPlaying,
                   style: TextStyle(
                     fontSize: AppConstants.fontXS.sp,
-                    color: AppColors.textOnDark,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontWeight: .w400
                   ),
                 )
@@ -258,7 +261,7 @@ class _AudioTimeIndicator extends StatelessWidget {
           style: TextStyle(
             fontSize: AppConstants.fontS.sp,
             fontWeight: .w500,
-            color: AppColors.textOnDark
+            color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         ),
         Text(
@@ -266,7 +269,7 @@ class _AudioTimeIndicator extends StatelessWidget {
           style: TextStyle(
             fontSize: AppConstants.fontS.sp,
             fontWeight: .w500,
-            color: AppColors.textOnDark
+            color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         )
       ],
@@ -319,9 +322,11 @@ class _TextContainer extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xff25303B),
+        color: surfaceColors.lighterPrimarySurface,
         borderRadius: .circular(AppConstants.radiusM.r),
       ),
       padding: EdgeInsets.symmetric(
@@ -333,7 +338,7 @@ class _TextContainer extends StatelessWidget {
         style: TextStyle(
           fontWeight: .w400,
           fontSize: AppConstants.spacingM.sp,
-          color: AppColors.textOnDark
+          color: Theme.of(context).textTheme.bodyMedium?.color,
         )
       ),
     );

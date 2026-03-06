@@ -1,5 +1,6 @@
 import 'package:automatic_demonstration/core/constants/constants.dart';
 import 'package:automatic_demonstration/core/theme/theme.dart';
+import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
@@ -104,7 +105,7 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
           'Lỗi tải dữ liệu: $error',
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
-            color: Colors.white70,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         ),
       ),
@@ -213,7 +214,7 @@ class _FoodStallListTitle extends StatelessWidget {
           AppStrings.foodStallSectionTitle,
           style: TextStyle(
             fontSize: AppConstants.fontL.sp,
-            color: Colors.white,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: .w700
           ),
         ),
@@ -249,7 +250,7 @@ class _FoodStallList extends StatelessWidget {
           'Không có quán nào',
           style: TextStyle(
             fontSize: AppConstants.fontL.sp,
-            color: Colors.white70,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         ),
       );
@@ -387,11 +388,13 @@ class _FoodStallLowerContainer extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     return SizedBox(
       width: double.infinity,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.foodStallLowerContainerBackgroundColor,
+          color: surfaceColors.primarySurface,
         ),
         padding: EdgeInsets.symmetric(
           horizontal: AppConstants.spacingM.w,
@@ -405,7 +408,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
                 name,
                 style: TextStyle(
                   fontSize: AppConstants.fontL.sp,
-                  color: AppColors.textOnDark,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: .w700
                 ),
               ),
@@ -414,7 +417,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
                 description,
                 style: TextStyle(
                   fontSize: AppConstants.fontM.sp,
-                  color: AppColors.textOnDark,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: .w300
                 ),
               ),
@@ -465,14 +468,14 @@ class _TimeAndSpaceDistanceRow extends StatelessWidget {
         Icon(
           FontAwesomeIcons.clock,
           size: AppConstants.fontM.r,
-          color: AppColors.textOnDark,
+          color: Theme.of(context).textTheme.bodyMedium?.color,
         ),
         SizedBox(width: AppConstants.spacingXS.w,),
         Text(
           "${audioDuration}s",
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
-            color: AppColors.textOnDark,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: .w300
           ),
         ),
@@ -486,19 +489,21 @@ class _ActionButtonsRow extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     final int height = 28;
     final provider = FoodStallItemProvider.of(context);
     if (provider == null) return const SizedBox();
     
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.foodStallLowerContainerBackgroundColor,
+        color: surfaceColors.primarySurface,
         borderRadius: .vertical(bottom: Radius.circular(AppConstants.radiusM.r)),
       ),
       padding: EdgeInsets.only(
         left: AppConstants.spacingM.w,
         right: AppConstants.spacingM.w,
-        top: AppConstants.spacingXS.w,
+        top: AppConstants.spacingS.w,
         bottom: AppConstants.spacingS.h
       ),
       child: Row(
@@ -530,7 +535,7 @@ class _ActionButtonsRow extends StatelessWidget {
                       AppStrings.playAudio,
                       style: TextStyle(
                         fontSize: AppConstants.fontM.sp,
-                        color: AppColors.textOnDark,
+                          color: AppColors.textOnDark,
                         fontWeight: .w400
                       ),
                     )
@@ -548,8 +553,8 @@ class _ActionButtonsRow extends StatelessWidget {
                 height: height.h,
                 decoration: BoxDecoration(
                   color: provider.isSkipped
-                      ? AppColors.playButtonColor
-                      : AppColors.skipButtonColor,
+                    ? AppColors.playButtonColor
+                    : surfaceColors.skipButtonSurface,
                   borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
                 ),
                 padding: EdgeInsets.symmetric(
@@ -562,7 +567,7 @@ class _ActionButtonsRow extends StatelessWidget {
                       provider.isSkipped
                         ? FontAwesomeIcons.rotateLeft
                         : FontAwesomeIcons.forwardStep,
-                      color: AppColors.textOnDark,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       size: AppConstants.fontS.r,
                     ),
                     SizedBox(width: AppConstants.spacingXS.w,),
@@ -572,7 +577,7 @@ class _ActionButtonsRow extends StatelessWidget {
                         : AppStrings.skipAudio,
                       style: TextStyle(
                           fontSize: AppConstants.fontM.sp,
-                          color: AppColors.textOnDark,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w400
                       ),
                     )
@@ -602,7 +607,7 @@ class _PageIndicator extends StatelessWidget {
      "$currentPage/$maxPage",
      style: TextStyle(
        fontSize: AppConstants.fontL.sp,
-       color: Colors.white,
+         color: Theme.of(context).textTheme.bodyMedium?.color,
        fontWeight: .w700
      ),
     );

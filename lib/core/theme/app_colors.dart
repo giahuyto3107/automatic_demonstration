@@ -9,11 +9,13 @@ class AppColors {
 
   static const Color primaryColor = Color(0xffF97015);
 
+  static const Color dividerColor = Color(0xff7daf89);
+
   static const Color sliderInactiveColor = Colors.white;
 
   static const Color sliderThumbColor = Colors.white;
 
-  static const LinearGradient backgroundColor = LinearGradient(
+  static const LinearGradient darkBackgroundGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
     colors: [
@@ -21,6 +23,16 @@ class AppColors {
       Color(0xFF29323C),
     ],
   );
+
+  static const LinearGradient lightBackgroundGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      Color(0xFFFFFFFF),
+      Color(0xFFDDDDDD),
+    ],
+  );
+
 
   static const LinearGradient logoColor = LinearGradient(
     begin: Alignment.centerLeft,   // Matches the horizontal flow in your image
@@ -55,7 +67,9 @@ class AppColors {
 
   static const Color playButtonColor = Color(0xffF97015);
 
-  static const Color skipButtonColor = Color(0xff2C3844);
+  static const Color skipButtonColorLightMode = Color(0xffF5F5F5);
+
+  static const Color skipButtonColorDarkMode = Color(0xff2C3844);
 
   static const Color enable = Color(0xff209851);
 
@@ -63,9 +77,13 @@ class AppColors {
 
   static const Color connecting = Color(0xffE7F214);
 
-  static const Color selectedBackgroundColor = Color(0xff1f2933);
+  static const Color selectedBackgroundColorDarkMode = Color(0xff1f2933);
 
-  static const Color unselectedBackgroundColor = Color(0xffD9D9D9);
+  static const Color unselectedBackgroundColorDarkMode = Color(0xffD9D9D9);
+
+  static const Color selectedBackgroundColorLightMode = Color(0xffffffff);
+
+  static const Color unselectedBackgroundColorLightMode = Color(0xffd9d9d9);
 
   static const Color selectedTextColor = Colors.white;
 

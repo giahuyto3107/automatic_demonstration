@@ -2,6 +2,7 @@ import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/constants/app_strings.dart';
 import 'package:automatic_demonstration/core/providers/app_theme.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
+import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/gps_enum.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
@@ -15,11 +16,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final backgroundGradients = context.backgroundGradients;
+
     return Scaffold(
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            gradient: AppColors.backgroundColor
+            gradient: backgroundGradients.topContainerGradient
           ),
           child: Column(
             children: [
@@ -63,8 +66,10 @@ class _HeadingRow extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final bgColors = context.surfaceColors;
+
     return Container(
-      color: Color(0xff252238),
+      color: bgColors.headingSurface,
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: AppConstants.spacingM.h,
@@ -108,6 +113,8 @@ class _LogoAndAppName extends StatelessWidget {
     return Row(
       mainAxisAlignment: .center,
       children: [
+        // ================  LOGO  ===================
+
         // Container(
         //   decoration: BoxDecoration(
         //     gradient: AppColors.logoColor,
@@ -131,7 +138,7 @@ class _LogoAndAppName extends StatelessWidget {
               AppStrings.appPrimaryTitle,
               style: TextStyle(
                   fontSize: AppConstants.fontS.sp,
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: .w700
               ),
             ),
@@ -140,7 +147,7 @@ class _LogoAndAppName extends StatelessWidget {
               AppStrings.appSecondaryTitle,
               style: TextStyle(
                   fontSize: AppConstants.fontXXS.sp,
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: .w400
               ),
             )
@@ -196,7 +203,7 @@ class _GPSSection extends StatelessWidget {
           Container(
             height: AppConstants.fontM.h,
             width: 1.0.w,
-            color: AppColors.unselectedBackgroundColor,
+            color: AppColors.dividerColor,
           ),
           SizedBox(width: AppConstants.spacingS.w,),
           _RefreshButton()
