@@ -1,4 +1,4 @@
-import 'package:automatic_demonstration/core/utils/utils.dart';
+import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -110,6 +110,8 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
 
   @override
   Widget build(BuildContext context) {
+    final selectionColors = context.selectionColors;
+
     List<String> audioCategoryItems = ['Tất cả', 'Đã nghe', 'Lọc'];
     int lastCategoryItemIndex = audioCategoryItems.length - 1;
 
@@ -129,7 +131,7 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
       link: _layerLink,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.unselectedBackgroundColor,
+          color: selectionColors.unselectedBg,
           borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
         ),
         child: Row(
@@ -147,7 +149,7 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
               isLastCategoryItem ? item : "$item ($listNumber)",
               style: TextStyle(
                 fontSize: AppConstants.fontM.sp,
-                color: isSelected ? Colors.white : const Color(0xff000000),
+                color: isSelected ? selectionColors.selectedText : selectionColors.unselectedText,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w400,
               ),
               textAlign: TextAlign.center,
@@ -162,7 +164,7 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.selectedBackgroundColor
+                        ? selectionColors.selectedBg
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
                   ),
@@ -176,8 +178,8 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
                             FontAwesomeIcons.caretDown,
                             size: AppConstants.fontL.r,
                             color: isSelected
-                                ? AppColors.selectedTextColor
-                                : AppColors.unSelectedTextColor,
+                              ? selectionColors.selectedText
+                              : AppColors.unSelectedTextColor,
                           ),
                         ],
                     )
@@ -275,10 +277,13 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+    final selectionColors = context.selectionColors;
+
     return Container(
       width: 300.w,
       decoration: BoxDecoration(
-        color: Color(0xff1F2933),
+        color: surfaceColors.primarySurface,
         borderRadius: BorderRadius.circular(12.sp),
         boxShadow: [
           BoxShadow(
@@ -302,7 +307,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
                 style: TextStyle(
                   fontSize: AppConstants.fontL.sp,
                   fontWeight: .w600,
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
                 textAlign: .start,
               ),
@@ -320,7 +325,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
                     min: widget.minDistance,
                     max: widget.maxDistance,
                     activeColor: Color(0xffF97015),
-                    inactiveColor: Colors.white,
+                    inactiveColor: selectionColors.selectedText,
                     // divisions: ((widget.maxDistance - widget.minDistance) / 1).toInt(),
                     padding: EdgeInsets.zero,
                     labels: RangeLabels(
@@ -328,7 +333,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
                       _selectedRange.end.toStringAsFixed(1),
                     ),
                     onChanged: (RangeValues newRange) =>
-                        _onSliderChanged(newRange),
+                      _onSliderChanged(newRange),
                   ),
 
                   Row(
@@ -339,7 +344,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
                         style: TextStyle(
                           fontSize: AppConstants.fontS.sp,
                           fontWeight: .w400,
-                          color: Colors.white,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                         ),
                       ),
                       Text(
@@ -347,7 +352,7 @@ class _DistanceFilterDropdownState extends State<DistanceFilterDropdown> {
                         style: TextStyle(
                           fontSize: AppConstants.fontS.sp,
                           fontWeight: .w400,
-                          color: Colors.white,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                         ),
                       ),
                     ],
@@ -439,6 +444,8 @@ class _TextFieldItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     final outlineBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(8.r),
       borderSide: BorderSide(color: Colors.grey.shade700, width: 1),
@@ -454,9 +461,9 @@ class _TextFieldItem extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: AppConstants.fontS.sp,
-              fontWeight: FontWeight.w500
+            color: Colors.grey.shade400,
+            fontSize: AppConstants.fontS.sp,
+            fontWeight: FontWeight.w500
           ),
         ),
         SizedBox(height: AppConstants.spacingXXS.h),
@@ -470,14 +477,14 @@ class _TextFieldItem extends StatelessWidget {
             decoration: InputDecoration(
               contentPadding: EdgeInsets.zero,
               filled: true,
-              fillColor: const Color(0xff2E3A44), // Slightly lighter than background
+              fillColor: surfaceColors.lighterPrimarySurface, // Slightly lighter than background
               enabledBorder: outlineBorder,
               focusedBorder: focusedBorder,
               hintText: "0.0",
               hintStyle: TextStyle(color: Colors.grey.shade600),
             ),
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontSize: AppConstants.fontS.sp,
               fontWeight: FontWeight.w400,
             ),
@@ -507,7 +514,7 @@ class _ConfirmButton extends StatelessWidget {
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
             fontWeight: .w600,
-            color: Colors.white,
+            color: AppColors.textOnDark,
           ),
           textAlign: .center,
         ),
