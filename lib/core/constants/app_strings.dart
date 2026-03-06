@@ -30,4 +30,8 @@ class AppStrings {
 
   static const String home = "Trang chủ";
   static const String settings = "Cài đặt";
+
+  static const String appPreferences = 'Cài đặt ứng dụng';
+  static const String notification = 'Thông báo';
+  static const String language = 'Ngôn ngữ';
 }

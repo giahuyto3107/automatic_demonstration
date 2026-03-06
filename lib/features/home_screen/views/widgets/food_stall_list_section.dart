@@ -197,6 +197,7 @@ class _BuildUI extends StatelessWidget {
           maxPage: visibleIndices.length,
         ),
         SizedBox(height: AppConstants.spacingXS.h),
+        // _AppNavigation(),
       ],
     );
   }
@@ -613,3 +614,12 @@ class _PageIndicator extends StatelessWidget {
     );
   }
 }
+
+// class _AppNavigation extends StatelessWidget {
+//   const _AppNavigation();
+//
+//   @override
+//   Widget build(BuildContext context) {
+//
+//   }
+// }
