@@ -8,7 +8,7 @@ class AppStrings {
   static const String gpsIsOff = "GPS Tắt";
   static const String gpsIsOn = "GPS Bật";
 
-  static const String playAudio = "Nghe thuyết minh";
+  static const String playAudio = "Phát";
   static const String skipAudio = "Bỏ qua";
   static const String restoreAudio = "Hoàn tác";
   static const String audioIsPlaying = "Đang phát thuyết minh";

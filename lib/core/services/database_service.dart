@@ -1,3 +1,4 @@
+import 'package:automatic_demonstration/core/config/env_config.dart';
 import 'package:automatic_demonstration/core/network/api_constants.dart';
 import 'package:automatic_demonstration/core/network/api_response.dart';
 import 'package:dio/dio.dart';
@@ -11,7 +12,7 @@ class DatabaseService {
   DatabaseService._() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: '',
+        baseUrl: EnvConfig.baseUrl,
         connectTimeout: Duration(milliseconds: ApiConstants.connectionTimeout),
         receiveTimeout: Duration(milliseconds: ApiConstants.receiveTimeout),
         headers: {

@@ -5,11 +5,11 @@ class FoodStallModel {
   final double? latitude;
   final double? longitude;
   final double? distance;
-  final double triggerRadius;
+  final int triggerRadius;
   final String audioUrl;
   final String imageUrl;
-  final double? minPrice;
-  final double? maxPrice;
+  final int? minPrice;
+  final int? maxPrice;
   final int audioDuration;
   final List<String> featuredReview;
   final double rating;
@@ -22,7 +22,7 @@ class FoodStallModel {
     this.latitude,
     this.longitude,
     this.distance,
-    this.triggerRadius = 0.0,
+    this.triggerRadius = 0,
     this.audioUrl = '',
     this.imageUrl = '',
     this.minPrice,
@@ -40,11 +40,11 @@ class FoodStallModel {
     double? latitude,
     double? longitude,
     double? distance,
-    double? triggerRadius,
+    int? triggerRadius,
     String? audioUrl,
     String? imageUrl,
-    double? minPrice,
-    double? maxPrice,
+    int? minPrice,
+    int? maxPrice,
     List<String>? featuredReview,
     int? audioDuration,
     double? rating,
@@ -75,11 +75,11 @@ class FoodStallModel {
       latitude: json['latitude'] as double?,
       longitude: json['longitude'] as double?,
       distance: json['distance'] as double?,
-      triggerRadius: json['triggerRadius'] as double? ?? 0,
+      triggerRadius: json['triggerRadius'] as int? ?? 0,
       audioUrl: json['audioUrl'] as String? ?? '',
       imageUrl: json['imageUrl'] as String? ?? '',
-      minPrice: json['minPrice'] as double?,
-      maxPrice: json['maxPrice'] as double?,
+      minPrice: json['minPrice'] as int?,
+      maxPrice: json['maxPrice'] as int?,
       featuredReview: json['featuredReview'] as List<String>? ?? [],
       audioDuration: json['audioDuration'] as int? ?? 0,
       rating: json['rating'] as double? ?? 0,

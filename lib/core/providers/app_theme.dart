@@ -6,9 +6,9 @@ part 'app_theme.g.dart';
 @riverpod
 class AppTheme extends _$AppTheme {
   @override
-  ThemeMode build() => ThemeMode.light; // Initial state
+  ThemeMode build() => ThemeMode.dark; // Initial state
 
   void toggleTheme() {
-    state = (state == ThemeMode.light) ? ThemeMode.dark : ThemeMode.light;
+    state = (state == ThemeMode.dark) ? ThemeMode.light : ThemeMode.dark;
   }
 }

@@ -1,10 +1,12 @@
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/constants/app_strings.dart';
+import 'package:automatic_demonstration/core/providers/app_theme.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
-import 'package:automatic_demonstration/features/home_screen/data/gps_enum.dart';
+import 'package:automatic_demonstration/features/home_screen/data/models/gps_enum.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -71,8 +73,26 @@ class _HeadingRow extends StatelessWidget {
         child: Row(
           mainAxisAlignment: .spaceBetween,
           children: [
-            _LogoAndAppName(),
-            _GPSSection(),
+            Expanded(
+              flex: 3,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _DarkModeTogglerButton())
+              ,
+            ),
+            Expanded(
+              flex: 4,
+              child: _LogoAndAppName()
+            ),
+            Expanded(
+              flex: 3,
+              child: Align(
+                alignment: .centerRight,
+                child: _GPSSection(
+                  status: EGpsStatus.enable,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -86,30 +106,31 @@ class _LogoAndAppName extends StatelessWidget {
   @override
   Widget build (BuildContext context) {
     return Row(
+      mainAxisAlignment: .center,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            gradient: AppColors.logoColor,
-            borderRadius: .circular(AppConstants.radiusM.r),
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingS.w,
-            vertical: AppConstants.spacingS.h,
-          ),
-          child: Icon(
-            FontAwesomeIcons.spoon,
-            color: Colors.white,
-          ),
-        ),
+        // Container(
+        //   decoration: BoxDecoration(
+        //     gradient: AppColors.logoColor,
+        //     borderRadius: .circular(AppConstants.radiusM.r),
+        //   ),
+        //   padding: EdgeInsets.symmetric(
+        //     horizontal: AppConstants.spacingS.w,
+        //     vertical: AppConstants.spacingS.h,
+        //   ),
+        //   child: Icon(
+        //     FontAwesomeIcons.spoon,
+        //     color: Colors.white,
+        //   ),
+        // ),
 
-        SizedBox(width: AppConstants.spacingM.w,),
+        // SizedBox(width: AppConstants.spacingM.w,),
 
         Column(
           children: [
             Text(
               AppStrings.appPrimaryTitle,
               style: TextStyle(
-                  fontSize: AppConstants.fontL.sp,
+                  fontSize: AppConstants.fontS.sp,
                   color: Colors.white,
                   fontWeight: .w700
               ),
@@ -118,7 +139,7 @@ class _LogoAndAppName extends StatelessWidget {
             Text(
               AppStrings.appSecondaryTitle,
               style: TextStyle(
-                  fontSize: AppConstants.fontXS.sp,
+                  fontSize: AppConstants.fontXXS.sp,
                   color: Colors.white,
                   fontWeight: .w400
               ),
@@ -131,55 +152,55 @@ class _LogoAndAppName extends StatelessWidget {
 }
 
 class _GPSSection extends StatelessWidget {
-  const _GPSSection();
+    final EGpsStatus status;
 
-  @override
-  Widget build (BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          FontAwesomeIcons.locationDot,
-          color: Color(0xff209851),
-          size: AppConstants.fontXL.r,
-          weight: AppConstants.borderMedium,
-        ),
-        SizedBox(width: AppConstants.spacingXS.w,),
-        _GPSStatus(
-          status: EGpsStatus.enable,
-        ),
-        SizedBox(width: AppConstants.spacingS.w,),
-        _RefreshButton()
-      ],
-    );
-  }
-}
-
-class _GPSStatus extends StatelessWidget {
-  final EGpsStatus status;
-  const _GPSStatus({
+  const _GPSSection({
     required this.status
   });
 
   @override
   Widget build (BuildContext context) {
-    String statusString = status == EGpsStatus.enable
+    String gpsStatus = status == EGpsStatus.enable
         ? "Bật"
         : status == EGpsStatus.disable
-          ? "Tắt"
-          : "Đang kết nối";
+        ? "Tắt"
+        : "Đang kết nối";
 
-    Color statusColor = status == EGpsStatus.enable
-        ? AppColors.enable
-        : status == EGpsStatus.disable
-        ? AppColors.disable
-        : AppColors.connecting;
-
-    return Text(
-      "GPS $statusString",
-      style: TextStyle(
-        color: statusColor,
-        fontSize: AppConstants.fontM.sp,
-        fontWeight: .w700,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppColors.enabledGpsBackground,
+        borderRadius: .circular(AppConstants.radiusCircular.r),
+        border: Border.all(
+          color: AppColors.enabledGpsBorder,
+          width: 1.0.w,
+        )
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppConstants.spacingM.w,
+        vertical: AppConstants.spacingXS.h,
+      ),
+      child: Row(
+        mainAxisAlignment: .center,
+        mainAxisSize: .min,
+        children: [
+          Tooltip(
+            message: "GPS $gpsStatus",
+            child: Icon(
+              FontAwesomeIcons.locationDot,
+              color: Color(0xff209851),
+              size: AppConstants.fontM.r,
+              weight: AppConstants.borderMedium,
+            ),
+          ),
+          SizedBox(width: AppConstants.spacingXS.w,),
+          Container(
+            height: AppConstants.fontM.h,
+            width: 1.0.w,
+            color: AppColors.unselectedBackgroundColor,
+          ),
+          SizedBox(width: AppConstants.spacingS.w,),
+          _RefreshButton()
+        ],
       ),
     );
   }
@@ -196,10 +217,117 @@ class _RefreshButton extends StatelessWidget {
       },
       child: Icon(
         FontAwesomeIcons.rotate,
-        size: AppConstants.fontXL.r,
+        size: AppConstants.fontS.r,
         color: Colors.white,
         weight: AppConstants.borderMedium,
       ),
+    );
+  }
+}
+
+class _DarkModeTogglerButton extends ConsumerWidget {
+  const _DarkModeTogglerButton();
+
+  @override
+  Widget build (BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(appThemeProvider);
+    final bool isLightMode = themeMode == ThemeMode.light;
+
+    void toggleTheme() {
+      ref.read(appThemeProvider.notifier).toggleTheme();
+    }
+
+    int slideSpacing = 27;
+    double toggleSize = 25.r;
+    int containerWidth = 70;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: toggleSize,
+      width: containerWidth.w,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+        border: Border.all(
+          color: isLightMode ? Colors.black : Colors.white,
+          width: 1.0.w,
+        ),
+        color: isLightMode ? Colors.white : Colors.black,
+      ),
+      child: InkWell(
+        onTap: toggleTheme,
+        child: Stack(
+          children: [
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 250),
+              curve: Curves.easeIn,
+              top: 0,    // add this
+              bottom: 0,
+              left: isLightMode ? containerWidth.w - toggleSize : 0.w,
+              right: isLightMode ? 0.w : containerWidth.w - toggleSize.w,
+              child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 250),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return RotationTransition(
+                      turns: animation,
+                      child: child,
+                    );
+                  },
+
+                  child: Container(
+                    height: 25.h,
+                    width: 25.h,
+                    decoration: BoxDecoration(
+                      color: isLightMode ? Colors.black : Colors.white,
+                      borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+                    ),
+                    child: isLightMode
+                      ? Icon(
+                        Icons.light_mode,
+                        color: Colors.white,
+                        size: 15.r,
+                        key: ValueKey(isLightMode),
+                      )
+                      : Icon(
+                        Icons.dark_mode,
+                        color: Colors.black,
+                        size: 15.r,
+                        key: ValueKey(isLightMode),
+                      ),
+                  )
+                ),
+            ),
+
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeIn,
+              left: isLightMode ? 0.w : slideSpacing.w,
+              right: isLightMode ? slideSpacing.w : 0.w,
+              top: 0,
+              bottom: 0,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Center(
+                  key: ValueKey(isLightMode),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: isLightMode ? AppConstants.spacingS.w : 0,   // padding away from border when on left
+                      right: isLightMode ? 0 : AppConstants.spacingS.w,  // padding away from border when on right
+                    ),
+                    child: Text(
+                      isLightMode ? 'Light' : 'Dark',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isLightMode ? Colors.black : Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      )
     );
   }
 }

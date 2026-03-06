@@ -6,13 +6,13 @@ class EnvConfig {
   static String get baseUrl {
     final envBaseUrl = dotenv.env['BASE_URL'] ??
       dotenv.env['DEV_BASE_URL'] ??
-      'localhost:8000/api/v1';
+      'localhost:8080/api/v1';
 
     return envBaseUrl;
   }
 
   static String get devBaseUrl {
-    return dotenv.env['DEV_BASE_URL'] ?? 'http://127.0.0.1:8000/api/v1';
+    return dotenv.env['DEV_BASE_URL'] ?? 'http://127.0.0.1:8080/api/v1';
   }
 
   /// Production base URL

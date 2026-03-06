@@ -40,6 +40,17 @@ class AppColors {
     ],
   );
 
+  static const LinearGradient enabledGpsBackground = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      Color(0xffcde9d2),
+      Color(0xffa2d6af),
+    ]
+  );
+
+  static const enabledGpsBorder = Color(0xffb8d5bf);
+
   static const Color foodStallLowerContainerBackgroundColor = Color(0xff1F2933);
 
   static const Color playButtonColor = Color(0xffF97015);
