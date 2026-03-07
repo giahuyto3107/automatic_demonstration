@@ -146,7 +146,7 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
             int listNumber = getCountForIndex(index);
 
             Widget itemContent = Text(
-              isLastCategoryItem ? item : "$item ($listNumber)",
+              isLastCategoryItem ? item : "$item",
               style: TextStyle(
                 fontSize: AppConstants.fontM.sp,
                 color: isSelected ? selectionColors.selectedText : selectionColors.unselectedText,

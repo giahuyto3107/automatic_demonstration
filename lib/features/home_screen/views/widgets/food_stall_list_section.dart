@@ -172,7 +172,10 @@ class _BuildUI extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const _FoodStallListTitle(),
+        _FoodStallListTitle(
+          visibleIndices: visibleIndices,
+          currentPage: currentPage,
+        ),
         SizedBox(height: AppConstants.spacingM.h),
         AudioCategoryContainer(
           allCount: allowFoodStallIndexes.where((allowed) => allowed).length,
@@ -192,11 +195,8 @@ class _BuildUI extends StatelessWidget {
             onRestore: onRestore,
           ),
         ),
-        _PageIndicator(
-          currentPage: visibleIndices.isEmpty ? 0 : currentPage + 1,
-          maxPage: visibleIndices.length,
-        ),
-        SizedBox(height: AppConstants.spacingXS.h),
+
+        // SizedBox(height: AppConstants.spacingXS.h),
         // _AppNavigation(),
       ],
     );
@@ -204,7 +204,13 @@ class _BuildUI extends StatelessWidget {
 }
 
 class _FoodStallListTitle extends StatelessWidget {
-  const _FoodStallListTitle();
+  final List<int> visibleIndices;
+  final int currentPage;
+
+  const _FoodStallListTitle({
+    required this.visibleIndices,
+    required this.currentPage,
+  });
 
   @override
   Widget build (BuildContext context) {
@@ -218,6 +224,11 @@ class _FoodStallListTitle extends StatelessWidget {
               color: Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: .w700
           ),
+        ),
+
+        _PageIndicator(
+          currentPage: visibleIndices.isEmpty ? 0 : currentPage + 1,
+          maxPage: visibleIndices.length,
         ),
       ],
     );
@@ -340,7 +351,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
             ),
           ),
           child: Center(
-              child: Icon(Icons.coffee)
+            child: Icon(Icons.coffee)
           )
         ),
 
