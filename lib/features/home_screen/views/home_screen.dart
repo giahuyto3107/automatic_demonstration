@@ -265,14 +265,14 @@ class _DarkModeTogglerButton extends ConsumerWidget {
         child: Stack(
           children: [
             AnimatedPositioned(
-              duration: Duration(milliseconds: 250),
+              duration: Duration(milliseconds: 400),
               curve: Curves.easeIn,
               top: 0,    // add this
               bottom: 0,
               left: isLightMode ? containerWidth.w - toggleSize : 0.w,
               right: isLightMode ? 0.w : containerWidth.w - toggleSize.w,
               child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 250),
+                  duration: Duration(milliseconds: 400),
                   transitionBuilder: (Widget child, Animation<double> animation) {
                     return RotationTransition(
                       turns: animation,
@@ -305,14 +305,14 @@ class _DarkModeTogglerButton extends ConsumerWidget {
             ),
 
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 400),
               curve: Curves.easeIn,
               left: isLightMode ? 0.w : slideSpacing.w,
               right: isLightMode ? slideSpacing.w : 0.w,
               top: 0,
               bottom: 0,
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 400),
                 child: Center(
                   key: ValueKey(isLightMode),
                   child: Padding(
