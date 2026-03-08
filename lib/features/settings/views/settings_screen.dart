@@ -1,8 +1,10 @@
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/constants/app_strings.dart';
+import 'package:automatic_demonstration/core/providers/app_theme.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -44,6 +46,7 @@ class _AppPreferences extends StatelessWidget {
     final surfaceColors = context.surfaceColors;
 
     final options = [
+      {'icon': FontAwesomeIcons.circleHalfStroke, 'label': AppStrings.theme},
       {'icon': Icons.notifications, 'label': AppStrings.notification},
       {'icon': FontAwesomeIcons.language, 'label': AppStrings.language},
     ];
@@ -81,6 +84,7 @@ class _AppPreferences extends StatelessWidget {
               return _OptionRow(
                 icon: options[index]['icon'] as IconData,
                 label: options[index]['label'] as String,
+                actionIcon: index == 0 ? _ThemeButton() : null,
               );
             },
           ),
@@ -93,10 +97,12 @@ class _AppPreferences extends StatelessWidget {
 class _OptionRow extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Widget? actionIcon;
 
   const _OptionRow({
     required this.icon,
-    required this.label
+    required this.label,
+    this.actionIcon,
   });
 
   @override
@@ -133,7 +139,7 @@ class _OptionRow extends StatelessWidget {
             ),
           ),
 
-          Icon(
+          actionIcon ?? Icon(
             Icons.chevron_right,
             color: Theme.of(context).textTheme.bodyMedium?.color,
             size: AppConstants.fontXXL.r,
@@ -141,6 +147,113 @@ class _OptionRow extends StatelessWidget {
           )
         ],
       ),
+    );
+  }
+}
+
+class _ThemeButton extends ConsumerWidget {
+  const _ThemeButton();
+
+  @override
+  Widget build (BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(appThemeProvider);
+    final bool isLightMode = themeMode == ThemeMode.light;
+
+    void toggleTheme() {
+      ref.read(appThemeProvider.notifier).toggleTheme();
+    }
+
+    int slideSpacing = 27;
+    double toggleSize = 25.r;
+    int containerWidth = 70;
+
+    return AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        height: toggleSize,
+        width: containerWidth.w,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+          border: Border.all(
+            color: isLightMode ? Colors.black : Colors.white,
+            width: 1.0.w,
+          ),
+          color: isLightMode ? Colors.white : Colors.black,
+        ),
+        child: InkWell(
+          onTap: toggleTheme,
+          child: Stack(
+            children: [
+              AnimatedPositioned(
+                duration: Duration(milliseconds: 400),
+                curve: Curves.easeIn,
+                top: 0,    // add this
+                bottom: 0,
+                left: isLightMode ? containerWidth.w - toggleSize : 0.w,
+                right: isLightMode ? 0.w : containerWidth.w - toggleSize.w,
+                child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 400),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return RotationTransition(
+                        turns: animation,
+                        child: child,
+                      );
+                    },
+
+                    child: Container(
+                      height: 25.h,
+                      width: 25.h,
+                      decoration: BoxDecoration(
+                        color: isLightMode ? Colors.black : Colors.white,
+                        borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+                      ),
+                      child: isLightMode
+                          ? Icon(
+                        Icons.light_mode,
+                        color: Colors.white,
+                        size: 15.r,
+                        key: ValueKey(isLightMode),
+                      )
+                          : Icon(
+                        Icons.dark_mode,
+                        color: Colors.black,
+                        size: 15.r,
+                        key: ValueKey(isLightMode),
+                      ),
+                    )
+                ),
+              ),
+
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeIn,
+                left: isLightMode ? 0.w : slideSpacing.w,
+                right: isLightMode ? slideSpacing.w : 0.w,
+                top: 0,
+                bottom: 0,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: Center(
+                    key: ValueKey(isLightMode),
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: isLightMode ? AppConstants.spacingS.w : 0,   // padding away from border when on left
+                        right: isLightMode ? 0 : AppConstants.spacingS.w,  // padding away from border when on right
+                      ),
+                      child: Text(
+                        isLightMode ? 'Light' : 'Dark',
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isLightMode ? Colors.black : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )
     );
   }
 }

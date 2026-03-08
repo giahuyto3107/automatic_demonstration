@@ -34,4 +34,5 @@ class AppStrings {
   static const String appPreferences = 'Cài đặt ứng dụng';
   static const String notification = 'Thông báo';
   static const String language = 'Ngôn ngữ';
+  static const String theme = 'Giao diện';
 }
