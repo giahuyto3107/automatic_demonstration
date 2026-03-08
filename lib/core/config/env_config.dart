@@ -26,9 +26,14 @@ class EnvConfig {
     return env == 'production';
   }
 
-  /// API Key (if needed)
+  /// API Key for tile maps
   static String get apiKey {
     return dotenv.env['API_KEY'] ?? '';
+  }
+
+  /// API Key for routing
+  static String get routingApiKey {
+    return dotenv.env['ROUTING_API_KEY'] ?? '';
   }
 
   /// Environment name
