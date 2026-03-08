@@ -42,7 +42,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            SizedBox(height: AppConstants.spacingL.h,),
+                            SizedBox(height: AppConstants.spacingM.h,),
                             Expanded(
                               child: FoodStallListSection()
                             ),

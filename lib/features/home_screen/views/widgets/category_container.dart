@@ -148,7 +148,7 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
             Widget itemContent = Text(
               isLastCategoryItem ? item : "$item",
               style: TextStyle(
-                fontSize: AppConstants.fontM.sp,
+                fontSize: AppConstants.fontS.sp,
                 color: isSelected ? selectionColors.selectedText : selectionColors.unselectedText,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w400,
               ),

@@ -180,14 +180,14 @@ class _BuildUI extends StatelessWidget {
           visibleIndices: visibleIndices,
           currentPage: currentPage,
         ),
-        SizedBox(height: AppConstants.spacingM.h),
+        SizedBox(height: AppConstants.spacingS.h),
         AudioCategoryContainer(
           allCount: allowFoodStallIndexes.where((allowed) => allowed).length,
           listenedCount:
               allowFoodStallIndexes.where((allowed) => !allowed).length,
           onCategoryChanged: onCategoryChanged,
         ),
-        SizedBox(height: AppConstants.spacingM.h),
+        SizedBox(height: AppConstants.spacingS.h),
         Expanded(
           child: _FoodStallList(
             models: foodStallModels,
@@ -200,7 +200,7 @@ class _BuildUI extends StatelessWidget {
           ),
         ),
 
-        // SizedBox(height: AppConstants.spacingXS.h),
+        SizedBox(height: AppConstants.spacingXXXL.h),
         // _AppNavigation(),
       ],
     );
@@ -224,7 +224,7 @@ class _FoodStallListTitle extends StatelessWidget {
         Text(
           AppStrings.foodStallSectionTitle,
           style: TextStyle(
-            fontSize: AppConstants.fontL.sp,
+            fontSize: AppConstants.fontM.sp,
               color: Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: .w700
           ),
@@ -304,7 +304,6 @@ class _FoodStallContainer extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
-    final provider = FoodStallItemProvider.of(context);
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -436,7 +435,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
               Text(
                 name,
                 style: TextStyle(
-                  fontSize: AppConstants.fontL.sp,
+                  fontSize: AppConstants.fontM.sp,
                   color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: .w700
                 ),
@@ -445,7 +444,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
               Text(
                 description,
                 style: TextStyle(
-                  fontSize: AppConstants.fontM.sp,
+                  fontSize: AppConstants.fontS.sp,
                   color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: .w300
                 ),
@@ -547,7 +546,7 @@ class _RouteInfoRowState extends State<_RouteInfoRow> {
       children: [
         Icon(
           FontAwesomeIcons.route,
-          size: AppConstants.fontM.r,
+          size: AppConstants.fontS.r,
           color: Color(0xffcaa01a),
         ),
         SizedBox(width: AppConstants.spacingXS.w),
@@ -561,42 +560,42 @@ class _RouteInfoRowState extends State<_RouteInfoRow> {
                 ),
               )
             : Flexible(
-                child: Text(
-                  distanceText,
-                  style: TextStyle(
-                    fontSize: AppConstants.fontM.sp,
-                    color: Color(0xffcaa01a),
-                    fontWeight: FontWeight.w300,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              child: Text(
+                distanceText,
+                style: TextStyle(
+                  fontSize: AppConstants.fontS.sp,
+                  color: Color(0xffcaa01a),
+                  fontWeight: FontWeight.w300,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
+            ),
         SizedBox(width: AppConstants.spacingL.w),
         Icon(
           FontAwesomeIcons.clock,
-          size: AppConstants.fontM.r,
+          size: AppConstants.fontS.r,
           color: Theme.of(context).textTheme.bodyMedium?.color,
         ),
         SizedBox(width: AppConstants.spacingXS.w),
         _isLoading
             ? SizedBox(
-                width: AppConstants.fontM.r,
-                height: AppConstants.fontM.r,
+                width: AppConstants.fontS.r,
+                height: AppConstants.fontS.r,
                 child: CircularProgressIndicator(
                   strokeWidth: 1.5,
                 ),
               )
             : Flexible(
-                child: Text(
-                  timeText,
-                  style: TextStyle(
-                    fontSize: AppConstants.fontM.sp,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                    fontWeight: FontWeight.w300,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              child: Text(
+                timeText,
+                style: TextStyle(
+                  fontSize: AppConstants.fontS.sp,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  fontWeight: FontWeight.w300,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
+            ),
       ],
     );
   }
@@ -779,7 +778,7 @@ class _PageIndicator extends StatelessWidget {
     return Text(
      "$currentPage/$maxPage",
      style: TextStyle(
-       fontSize: AppConstants.fontL.sp,
+       fontSize: AppConstants.fontM.sp,
          color: Theme.of(context).textTheme.bodyMedium?.color,
        fontWeight: .w700
      ),

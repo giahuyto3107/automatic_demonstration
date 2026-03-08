@@ -1,6 +1,7 @@
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/constants/app_strings.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
+import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -10,11 +11,13 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final bgColors = context.backgroundGradients;
+
     return Scaffold(
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.grey
+            gradient: bgColors.topContainerGradient
           ),
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -38,6 +41,8 @@ class _AppPreferences extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     final options = [
       {'icon': Icons.notifications, 'label': AppStrings.notification},
       {'icon': FontAwesomeIcons.language, 'label': AppStrings.language},
@@ -50,7 +55,7 @@ class _AppPreferences extends StatelessWidget {
           AppStrings.appPreferences,
           style: TextStyle(
             fontSize: AppConstants.spacingL.sp,
-            color: AppColors.textOnLight,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: .w600
           ),
         ),
@@ -59,8 +64,8 @@ class _AppPreferences extends StatelessWidget {
 
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-              borderRadius: BorderRadius.circular(AppConstants.radiusL.r)
+            color: surfaceColors.primarySurface,
+            borderRadius: BorderRadius.circular(AppConstants.radiusL.r)
           ),
           child: ListView.separated(
             shrinkWrap: true, // Use this if inside a Column
@@ -96,9 +101,11 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surfaceColors.primarySurface,
           borderRadius: BorderRadius.circular(AppConstants.radiusL.r)
       ),
       padding: EdgeInsets.symmetric(
@@ -109,7 +116,7 @@ class _OptionRow extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: AppColors.textOnLight,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             size: AppConstants.fontL.r,
             weight: AppConstants.borderThin.r,
           ),
@@ -120,7 +127,7 @@ class _OptionRow extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: AppConstants.fontM.sp,
-                color: AppColors.textOnLight,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: .w400
               ),
             ),
@@ -128,7 +135,7 @@ class _OptionRow extends StatelessWidget {
 
           Icon(
             Icons.chevron_right,
-            color: AppColors.textOnLight,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             size: AppConstants.fontXXL.r,
             weight: AppConstants.borderThick.r,
           )

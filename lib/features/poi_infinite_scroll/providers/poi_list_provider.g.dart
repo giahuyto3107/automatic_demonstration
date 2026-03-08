@@ -151,7 +151,7 @@ final class PoiByIdProvider extends $FunctionalProvider<POI?, POI?, POI?>
   }
 }
 
-String _$poiByIdHash() => r'a401747f54307e958e5def4349a2fddbba5dcdcb';
+String _$poiByIdHash() => r'93b8bf5fd8fe0b912c154189cb45ef61459c0484';
 
 /// Provider for getting a single POI by ID.
 
@@ -236,7 +236,7 @@ final class ShouldPrefetchProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$shouldPrefetchHash() => r'7f99ab2218922d14dad0c3f29e455d34fb6a7f76';
+String _$shouldPrefetchHash() => r'630b1c828d2444623ad2bdcc2ef5cf89cffc062a';
 
 /// Provider for prefetch trigger check.
 
