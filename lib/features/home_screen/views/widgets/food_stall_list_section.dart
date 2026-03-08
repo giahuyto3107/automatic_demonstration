@@ -1,15 +1,19 @@
 import 'package:automatic_demonstration/core/constants/constants.dart';
+import 'package:automatic_demonstration/core/services/vietmap_routing_service.dart';
 import 'package:automatic_demonstration/core/theme/theme.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
+import 'package:automatic_demonstration/features/home_screen/data/repository/routing_repository.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
+import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 class FoodStallListSection extends ConsumerStatefulWidget {
   const FoodStallListSection({super.key});
@@ -300,15 +304,20 @@ class _FoodStallContainer extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final provider = FoodStallItemProvider.of(context);
+
     return Padding(
       padding: EdgeInsets.symmetric(
         vertical: AppConstants.spacingS.h,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
+          Flexible(
+            fit: FlexFit.loose,
             child: SingleChildScrollView(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _FoodStallUpperContainer(
                     foodStallModel: foodStallModel,
@@ -318,14 +327,18 @@ class _FoodStallContainer extends StatelessWidget {
                     audioDuration: foodStallModel.audioDuration,
                     description: foodStallModel.description,
                     name: foodStallModel.name,
+                    latitude: foodStallModel.latitude,
+                    longitude: foodStallModel.longitude,
                   ),
                 ],
               ),
             ),
           ),
-
-          _ActionButtonsRow(),
-        ]
+          _ActionButtonsRow(
+            latitude: foodStallModel.latitude,
+            longitude: foodStallModel.longitude,
+          ),
+        ],
       ),
     );
   }
@@ -390,12 +403,16 @@ class _FoodStallLowerContainer extends StatelessWidget {
   final String description;
   final double distance;
   final int audioDuration;
+  final double? latitude;
+  final double? longitude;
 
   const _FoodStallLowerContainer({
     required this.name,
     required this.description,
     required this.distance,
     required this.audioDuration,
+    this.latitude,
+    this.longitude,
   });
 
   @override
@@ -436,8 +453,10 @@ class _FoodStallLowerContainer extends StatelessWidget {
 
               SizedBox(height: AppConstants.spacingS.h,),
 
-              _TimeAndSpaceDistanceRow(
-                distance: distance,
+              _RouteInfoRow(
+                stallLat: latitude,
+                stallLng: longitude,
+                fallbackDistance: distance,
                 audioDuration: audioDuration,
               ),
             ],
@@ -447,63 +466,185 @@ class _FoodStallLowerContainer extends StatelessWidget {
   }
 }
 
-class _TimeAndSpaceDistanceRow extends StatelessWidget {
-  final double distance;
+/// Displays route-based distance and travel time from VietMap API.
+///
+/// Falls back to straight-line distance when route data is unavailable.
+class _RouteInfoRow extends StatefulWidget {
+  final double? stallLat;
+  final double? stallLng;
+  final double fallbackDistance;
   final int audioDuration;
 
-  const _TimeAndSpaceDistanceRow({
-    required this.distance,
+  const _RouteInfoRow({
+    required this.stallLat,
+    required this.stallLng,
+    required this.fallbackDistance,
     required this.audioDuration,
   });
 
   @override
-  Widget build (BuildContext context) {
+  State<_RouteInfoRow> createState() => _RouteInfoRowState();
+}
+
+class _RouteInfoRowState extends State<_RouteInfoRow> {
+  String? _routeDistance;
+  String? _routeTime;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRouteInfo();
+  }
+
+  Future<void> _fetchRouteInfo() async {
+    if (widget.stallLat == null || widget.stallLng == null) {
+      debugPrint('[RouteInfo] Stall coordinates are null');
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      debugPrint('[RouteInfo] User: ${position.latitude}, ${position.longitude} -> Stall: ${widget.stallLat}, ${widget.stallLng}');
+
+      final repository = RoutingRepository(VietMapRoutingService.instance);
+      final route = await repository.getRouteToStall(
+        userLat: position.latitude,
+        userLng: position.longitude,
+        stallLat: widget.stallLat!,
+        stallLng: widget.stallLng!,
+      );
+
+      if (mounted && route != null) {
+        debugPrint('[RouteInfo] Success: ${route.formattedDistance}, ${route.formattedTime}');
+        setState(() {
+          _routeDistance = route.formattedDistance;
+          _routeTime = route.formattedTime;
+          _isLoading = false;
+        });
+      } else {
+        debugPrint('[RouteInfo] Route is null');
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint('[RouteInfo] Error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final distanceText = _routeDistance ?? '${widget.fallbackDistance.toStringAsFixed(1)}m';
+    final timeText = _routeTime ?? '${widget.audioDuration}s';
+
     return Row(
       children: [
         Icon(
-          FontAwesomeIcons.locationDot,
+          FontAwesomeIcons.route,
           size: AppConstants.fontM.r,
           color: Color(0xffcaa01a),
         ),
-        SizedBox(width: AppConstants.spacingXS.w,),
-        Text(
-          "${distance.toStringAsFixed(1)}m",
-          style: TextStyle(
-            fontSize: AppConstants.fontM.sp,
-            color: Color(0xffcaa01a),
-            fontWeight: .w300
-          ),
-        ),
-
-        SizedBox(width: AppConstants.spacingL.w,),
-
+        SizedBox(width: AppConstants.spacingXS.w),
+        _isLoading
+            ? SizedBox(
+                width: AppConstants.fontM.r,
+                height: AppConstants.fontM.r,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Color(0xffcaa01a),
+                ),
+              )
+            : Flexible(
+                child: Text(
+                  distanceText,
+                  style: TextStyle(
+                    fontSize: AppConstants.fontM.sp,
+                    color: Color(0xffcaa01a),
+                    fontWeight: FontWeight.w300,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+        SizedBox(width: AppConstants.spacingL.w),
         Icon(
           FontAwesomeIcons.clock,
           size: AppConstants.fontM.r,
           color: Theme.of(context).textTheme.bodyMedium?.color,
         ),
-        SizedBox(width: AppConstants.spacingXS.w,),
-        Text(
-          "${audioDuration}s",
-          style: TextStyle(
-            fontSize: AppConstants.fontM.sp,
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-            fontWeight: .w300
-          ),
-        ),
+        SizedBox(width: AppConstants.spacingXS.w),
+        _isLoading
+            ? SizedBox(
+                width: AppConstants.fontM.r,
+                height: AppConstants.fontM.r,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                ),
+              )
+            : Flexible(
+                child: Text(
+                  timeText,
+                  style: TextStyle(
+                    fontSize: AppConstants.fontM.sp,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    fontWeight: FontWeight.w300,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
       ],
     );
   }
 }
 
 class _ActionButtonsRow extends StatelessWidget {
-  const _ActionButtonsRow();
+  final double? latitude;
+  final double? longitude;
+
+  const _ActionButtonsRow({
+    this.latitude,
+    this.longitude,
+  });
+
+  Future<void> _showRouteOnMap(BuildContext context) async {
+    if (latitude == null || longitude == null) return;
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      final repository = RoutingRepository(VietMapRoutingService.instance);
+      final route = await repository.getRouteToStall(
+        userLat: position.latitude,
+        userLng: position.longitude,
+        stallLat: latitude!,
+        stallLng: longitude!,
+      );
+
+      if (route != null && route.points.isNotEmpty) {
+        MapContainer.globalKey.currentState?.drawRoute(route.points);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể tải chỉ đường: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build (BuildContext context) {
     final surfaceColors = context.surfaceColors;
 
-    final int height = 28;
     final provider = FoodStallItemProvider.of(context);
     if (provider == null) return const SizedBox();
     
@@ -513,8 +654,8 @@ class _ActionButtonsRow extends StatelessWidget {
         borderRadius: .vertical(bottom: Radius.circular(AppConstants.radiusM.r)),
       ),
       padding: EdgeInsets.only(
-        left: AppConstants.spacingM.w,
-        right: AppConstants.spacingM.w,
+        left: AppConstants.spacingS.w,
+        right: AppConstants.spacingS.w,
         top: AppConstants.spacingS.w,
         bottom: AppConstants.spacingS.h
       ),
@@ -522,83 +663,103 @@ class _ActionButtonsRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Expanded(
-            flex: 5,
-            child: GestureDetector(
-              onTap: provider.onPlayTap,
-              child: Container(
-                height: height.h,
-                decoration: BoxDecoration(
-                  color: AppColors.playButtonColor,
-                  borderRadius: .circular(AppConstants.radiusM.r),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppConstants.spacingM.w
-                ),
-                child: Row(
-                  mainAxisAlignment: .center,
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.play,
-                      color: AppColors.textOnDark,
-                      size: AppConstants.fontS.r,
-                    ),
-                    SizedBox(width: AppConstants.spacingXS.w,),
-                    Text(
-                      AppStrings.playAudio,
-                      style: TextStyle(
-                        fontSize: AppConstants.fontM.sp,
-                          color: AppColors.textOnDark,
-                        fontWeight: .w400
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
+            flex: 3,
+            child: _ActionButtonContainer(
+              latitude: latitude,
+              longitude: longitude,
+              icon: FontAwesomeIcons.play,
+              name: AppStrings.playAudio,
+              bgColor: AppColors.playButtonColor,
+              onClick: provider.onPlayTap
+            )
           ),
-          SizedBox(width: AppConstants.spacingS.w,),
+          SizedBox(width: AppConstants.spacingXS.w,),
           Expanded(
-            flex: 5,
-            child: GestureDetector(
-              onTap: provider.onSkipOrRestoreTap,
-              child: Container(
-                height: height.h,
-                decoration: BoxDecoration(
-                  color: provider.isSkipped
-                    ? AppColors.playButtonColor
-                    : surfaceColors.skipButtonSurface,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppConstants.spacingM.w
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      provider.isSkipped
-                        ? FontAwesomeIcons.rotateLeft
-                        : FontAwesomeIcons.forwardStep,
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                      size: AppConstants.fontS.r,
-                    ),
-                    SizedBox(width: AppConstants.spacingXS.w,),
-                    Text(
-                      provider.isSkipped
-                        ? AppStrings.restoreAudio
-                        : AppStrings.skipAudio,
-                      style: TextStyle(
-                          fontSize: AppConstants.fontM.sp,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                          fontWeight: FontWeight.w400
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
+            flex: 4,
+            child: _ActionButtonContainer(
+              latitude: latitude,
+              longitude: longitude,
+              icon: FontAwesomeIcons.route,
+              name: 'Chỉ đường',
+              bgColor: Color(0xff4A90D9),
+              onClick: () => _showRouteOnMap(context),
+            )
+          ),
+          SizedBox(width: AppConstants.spacingXS.w,),
+          Expanded(
+            flex: 3,
+            child: _ActionButtonContainer(
+              latitude: latitude,
+              longitude: longitude,
+              icon: provider.isSkipped
+                  ? FontAwesomeIcons.rotateLeft
+                  : FontAwesomeIcons.forwardStep,
+              name: provider.isSkipped
+                  ? AppStrings.restoreAudio
+                  : AppStrings.skipAudio,
+              bgColor: provider.isSkipped
+                  ? AppColors.playButtonColor
+                  : surfaceColors.skipButtonSurface,
+              onClick: provider.onSkipOrRestoreTap
+            )
           )
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButtonContainer extends StatelessWidget {
+  final double? latitude;
+  final double? longitude;
+  final IconData icon;
+  final String name;
+  final Color bgColor;
+  final Function() onClick;
+
+  const _ActionButtonContainer({
+    required this.latitude,
+    required this.longitude,
+    required this.icon,
+    required this.name,
+    required this.bgColor,
+    required this.onClick,
+  });
+
+  @override
+  Widget build (BuildContext context) {
+    final int height = 25;
+
+    return GestureDetector(
+      onTap: () => onClick(),
+      child: Container(
+        height: height.h,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppConstants.spacingXXS.w
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: AppColors.textOnDark,
+              size: AppConstants.fontXS.r,
+            ),
+            SizedBox(width: AppConstants.spacingXS.w,),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: AppConstants.fontXS.sp,
+                color: AppColors.textOnDark,
+                fontWeight: FontWeight.w500,
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

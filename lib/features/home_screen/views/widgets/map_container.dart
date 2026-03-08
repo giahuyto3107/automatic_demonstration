@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:automatic_demonstration/core/config/config.dart';
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
+import 'package:automatic_demonstration/core/utils/polyline_decoder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
@@ -21,6 +22,10 @@ class MapContainerState extends State<MapContainer> {
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStreamSubscription;
   Circle? _userLocationCircle;
+  bool _hasRoute = false;
+
+  /// Expose user location for routing providers.
+  LatLng? get userLocation => _userLocation;
 
   @override
   void initState() {
@@ -106,10 +111,77 @@ class MapContainerState extends State<MapContainer> {
     });
   }
 
+  /// Draw a route polyline on the map from an encoded polyline string.
+  ///
+  /// [encodedPolyline] — Google Polyline 5 encoded string from VietMap API.
+  Future<void> drawRoute(String encodedPolyline) async {
+    if (_mapController == null) return;
+
+    // Clear any existing route first
+    await clearRoute();
+
+    // Decode the polyline to LatLng points
+    final List<LatLng> routePoints = decodePolyline(encodedPolyline);
+
+    if (routePoints.isEmpty) return;
+
+    // Draw the route line
+    await _mapController!.addPolyline(
+      PolylineOptions(
+        geometry: routePoints,
+        polylineColor: Color(0xff4A90D9),
+        polylineWidth: 5.0,
+        polylineOpacity: 0.85,
+      ),
+    );
+    _hasRoute = true;
+
+    // Fit the camera to show the entire route
+    if (routePoints.length >= 2) {
+      final bounds = LatLngBounds(
+        southwest: LatLng(
+          routePoints.map((p) => p.latitude).reduce((a, b) => a < b ? a : b),
+          routePoints.map((p) => p.longitude).reduce((a, b) => a < b ? a : b),
+        ),
+        northeast: LatLng(
+          routePoints.map((p) => p.latitude).reduce((a, b) => a > b ? a : b),
+          routePoints.map((p) => p.longitude).reduce((a, b) => a > b ? a : b),
+        ),
+      );
+
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, left: 50, top: 50, right: 50, bottom: 50),
+      );
+    }
+  }
+
+  /// Draw route given a list of LatLng points directly.
+  Future<void> drawRouteFromPoints(List<LatLng> routePoints) async {
+    if (_mapController == null || routePoints.isEmpty) return;
+
+    await clearRoute();
+
+    await _mapController!.addPolyline(
+      PolylineOptions(
+        geometry: routePoints,
+        polylineColor: Color(0xff4A90D9),
+        polylineWidth: 5.0,
+        polylineOpacity: 0.85,
+      ),
+    );
+    _hasRoute = true;
+  }
+
+  /// Clear the currently drawn route from the map.
+  Future<void> clearRoute() async {
+    if (_mapController == null || !_hasRoute) return;
+    await _mapController!.clearPolylines();
+    _hasRoute = false;
+  }
+
   @override
   Widget build (BuildContext context) {
     final apiKey = EnvConfig.apiKey;
-    // final apiKey = '';
 
     return SizedBox(
       height: 160.h,
