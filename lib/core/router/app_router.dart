@@ -1,5 +1,6 @@
 import 'package:automatic_demonstration/core/router/app_routes.dart';
 import 'package:automatic_demonstration/features/home_screen/views/home_screen.dart';
+import 'package:automatic_demonstration/features/qr_scanner/views/qr_scanner_screen.dart';
 import 'package:automatic_demonstration/features/settings/views/settings_screen.dart';
 import 'package:automatic_demonstration/features/shell/views/main_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +13,12 @@ final GoRouter appRouter = GoRouter(
           name: 'main_screen',
           builder: (context, state) => MainScreen()
       ),
+
+      GoRoute(
+        path: AppRoutes.qrScannerPath,
+        name: 'qr_scanner_screen',
+        builder: (context, state) => QrScannerScreen()
+      )
 
       // GoRoute(
       //   path: '/',

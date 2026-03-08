@@ -1,10 +1,12 @@
 import 'dart:ui';
 
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
+import 'package:automatic_demonstration/core/router/app_routes.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 class NavBar extends StatelessWidget {
   final int currentIndex;
@@ -115,7 +117,7 @@ class _SnapButton extends StatelessWidget {
   @override
   Widget build (BuildContext context) {
     return GestureDetector(
-      onTap: () => {},
+      onTap: () => context.push(AppRoutes.qrScannerPath),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 55.w,
