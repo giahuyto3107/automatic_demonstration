@@ -73,7 +73,7 @@ class AppColors {
 
   static const Color enable = Color(0xff209851);
 
-  static const Color disable = Color(0xffFF0000);
+  static const Color disable = Color(0xffa5a5a5);
 
   static const Color connecting = Color(0xffE7F214);
 
