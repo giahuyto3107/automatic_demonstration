@@ -14,7 +14,7 @@ class MainScreen extends ConsumerWidget {
   Widget build (BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(mainNavigationControllerProvider);
 
-    List<Widget> _screens = [
+    List<Widget> screens = [
       const HomeScreen(),
       const SettingsScreen(),
     ];
@@ -26,26 +26,19 @@ class MainScreen extends ConsumerWidget {
             bottom: false,
             child: IndexedStack(
               index: currentIndex,
-              children: _screens,
+              children: screens,
             ),
           ),
 
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: AppConstants.spacingS.h,
-                ),
-                child: IntrinsicHeight(
-                  child: NavBar(
-                    onTap: ref.read(mainNavigationControllerProvider.notifier).setIndex,
-                    currentIndex: currentIndex,
-                  ),
-                ),
-              )
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom,
+            left: 0,
+            right: 0,
+            child: NavBar(
+              onTap: ref.read(mainNavigationControllerProvider.notifier).setIndex,
+              currentIndex: currentIndex,
             ),
-          )
+          ),
         ]
       ),
     );
