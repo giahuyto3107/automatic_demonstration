@@ -84,7 +84,7 @@ class POIListItem extends ConsumerWidget {
             ? Image.network(
                 poi.imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
+                errorBuilder: (_, _, _) => _buildPlaceholderIcon(),
               )
             : _buildPlaceholderIcon(),
       ),

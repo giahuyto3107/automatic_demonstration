@@ -13,6 +13,7 @@ class AppStrings {
   static const String restoreAudio = "Hoàn tác";
   static const String audioIsPlaying = "Đang phát thuyết minh";
   static const String audioIsStopped = "Đã tạm dừng";
+  static const String audioIsStoppedButton = "Dừng";
 
   static const String confirmButton = "Xác nhận";
 

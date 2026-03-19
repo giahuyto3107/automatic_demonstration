@@ -80,7 +80,7 @@ class RoutingData {
   /// Formatted distance with estimate indicator.
   String get formattedDistanceWithIndicator {
     final prefix = isEstimate ? '~' : '';
-    return '$prefix${formattedDistance}';
+    return '$prefix$formattedDistance';
   }
 
   /// Formatted time string (e.g., "5 phút").
@@ -106,5 +106,5 @@ class RoutingData {
 
   @override
   String toString() =>
-      'RoutingData(${formattedDistanceWithIndicator}, ${isEstimate ? "estimate" : formattedTime})';
+      'RoutingData($formattedDistanceWithIndicator, ${isEstimate ? "estimate" : formattedTime})';
 }

@@ -4,6 +4,8 @@ import 'package:automatic_demonstration/core/theme/theme.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/data/repository/routing_repository.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/audio_notifier.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/audio_service_provider.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
 import 'package:automatic_demonstration/features/home_screen/utils/duration_converter.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
@@ -15,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:just_audio/just_audio.dart';
 
 class FoodStallListSection extends ConsumerStatefulWidget {
   const FoodStallListSection({super.key});
@@ -55,6 +58,24 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   }
 
   void _onPlay(int index) {
+    final url = _foodStallModels[index].audioUrl;
+    final notifier = ref.read(audioProvider.notifier);
+    final audioState = ref.read(audioProvider);
+    final playerState = ref.read(audioPlayerStateProvider).value;
+
+    if (audioState.value == url) {
+      if (playerState?.processingState == ProcessingState.completed) {
+        notifier.seek(Duration.zero);
+        notifier.resume();
+      } else if (playerState?.playing == true) {
+        notifier.pause();
+      } else {
+        notifier.resume();
+      }
+    } else {
+      notifier.load(url);
+    }
+
     showModalBottomSheet(
       context: context,
       isDismissible: true,
@@ -69,6 +90,7 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   }
 
   void _onSkip(int index) {
+    ref.read(audioProvider.notifier).stop();
     setState(() {
       _allowFoodStallIndexes[index] = false;
     });
@@ -335,8 +357,7 @@ class _FoodStallContainer extends StatelessWidget {
             ),
           ),
           _ActionButtonsRow(
-            latitude: foodStallModel.latitude,
-            longitude: foodStallModel.longitude,
+            foodStallModel: foodStallModel,
           ),
         ],
       ),
@@ -603,16 +624,16 @@ class _RouteInfoRowState extends State<_RouteInfoRow> {
   }
 }
 
-class _ActionButtonsRow extends StatelessWidget {
-  final double? latitude;
-  final double? longitude;
+class _ActionButtonsRow extends ConsumerWidget {
+  final FoodStallModel foodStallModel;
 
   const _ActionButtonsRow({
-    this.latitude,
-    this.longitude,
+    required this.foodStallModel,
   });
 
   Future<void> _showRouteOnMap(BuildContext context) async {
+    final latitude = foodStallModel.latitude;
+    final longitude = foodStallModel.longitude;
     if (latitude == null || longitude == null) return;
 
     try {
@@ -626,8 +647,8 @@ class _ActionButtonsRow extends StatelessWidget {
       final route = await repository.getRouteToStall(
         userLat: position.latitude,
         userLng: position.longitude,
-        stallLat: latitude!,
-        stallLng: longitude!,
+        stallLat: latitude,
+        stallLng: longitude,
       );
 
       if (route != null && route.points.isNotEmpty) {
@@ -643,67 +664,78 @@ class _ActionButtonsRow extends StatelessWidget {
   }
 
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final surfaceColors = context.surfaceColors;
 
     final provider = FoodStallItemProvider.of(context);
     if (provider == null) return const SizedBox();
-    
+
+    final audioAsync = ref.watch(audioProvider);
+    final playerStateAsync = ref.watch(audioPlayerStateProvider);
+
+    final currentAudioUrl = audioAsync.value;
+    final isPlaying = playerStateAsync.value?.playing ?? false;
+    final isCurrentStallPlaying = isPlaying && currentAudioUrl == foodStallModel.audioUrl;
+
     return Container(
       decoration: BoxDecoration(
         color: surfaceColors.primarySurface,
         borderRadius: .vertical(bottom: Radius.circular(AppConstants.radiusM.r)),
       ),
       padding: EdgeInsets.only(
-        left: AppConstants.spacingS.w,
-        right: AppConstants.spacingS.w,
-        top: AppConstants.spacingS.w,
-        bottom: AppConstants.spacingS.h
-      ),
+          left: AppConstants.spacingS.w,
+          right: AppConstants.spacingS.w,
+          top: AppConstants.spacingS.w,
+          bottom: AppConstants.spacingS.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Expanded(
-            flex: 3,
-            child: _ActionButtonContainer(
-              latitude: latitude,
-              longitude: longitude,
-              icon: FontAwesomeIcons.play,
-              name: AppStrings.playAudio,
-              bgColor: AppColors.playButtonColor,
-              onClick: provider.onPlayTap
-            )
+              flex: 3,
+              child: _ActionButtonContainer(
+                  latitude: foodStallModel.latitude,
+                  longitude: foodStallModel.longitude,
+                  icon: isCurrentStallPlaying
+                      ? FontAwesomeIcons.pause
+                      : FontAwesomeIcons.play,
+                  name: isCurrentStallPlaying
+                      ? AppStrings.audioIsStoppedButton
+                      : AppStrings.playAudio,
+                  bgColor: isCurrentStallPlaying
+                      ? AppColors.enable
+                      : AppColors.playButtonColor,
+                  onClick: provider.onPlayTap)),
+          SizedBox(
+            width: AppConstants.spacingXS.w,
           ),
-          SizedBox(width: AppConstants.spacingXS.w,),
           Expanded(
-            flex: 4,
-            child: _ActionButtonContainer(
-              latitude: latitude,
-              longitude: longitude,
-              icon: FontAwesomeIcons.route,
-              name: 'Chỉ đường',
-              bgColor: Color(0xff4A90D9),
-              onClick: () => _showRouteOnMap(context),
-            )
+              flex: 4,
+              child: _ActionButtonContainer(
+                latitude: foodStallModel.latitude,
+                longitude: foodStallModel.longitude,
+                icon: FontAwesomeIcons.route,
+                name: 'Chỉ đường',
+                bgColor: Color(0xff4A90D9),
+                onClick: () => _showRouteOnMap(context),
+              )),
+          SizedBox(
+            width: AppConstants.spacingXS.w,
           ),
-          SizedBox(width: AppConstants.spacingXS.w,),
           Expanded(
-            flex: 3,
-            child: _ActionButtonContainer(
-              latitude: latitude,
-              longitude: longitude,
-              icon: provider.isSkipped
-                  ? FontAwesomeIcons.rotateLeft
-                  : FontAwesomeIcons.forwardStep,
-              name: provider.isSkipped
-                  ? AppStrings.restoreAudio
-                  : AppStrings.skipAudio,
-              bgColor: provider.isSkipped
-                  ? AppColors.playButtonColor
-                  : surfaceColors.skipButtonSurface,
-              onClick: provider.onSkipOrRestoreTap
-            )
-          )
+              flex: 3,
+              child: _ActionButtonContainer(
+                  latitude: foodStallModel.latitude,
+                  longitude: foodStallModel.longitude,
+                  icon: provider.isSkipped
+                      ? FontAwesomeIcons.rotateLeft
+                      : FontAwesomeIcons.forwardStep,
+                  name: provider.isSkipped
+                      ? AppStrings.restoreAudio
+                      : AppStrings.skipAudio,
+                  bgColor: provider.isSkipped
+                      ? AppColors.playButtonColor
+                      : surfaceColors.skipButtonSurface,
+                  onClick: provider.onSkipOrRestoreTap))
         ],
       ),
     );

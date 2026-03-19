@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:just_audio/just_audio.dart';
 
 class AudioService {
@@ -15,19 +14,16 @@ class AudioService {
   Stream<Duration?> get durationStream => _player.durationStream;
 
   Future<void> initAudio(String url) async {
-    try {
-      await _player.setAudioSource(
-        AudioSource.uri(Uri.parse(url)),
-      );
-      _player.play();
-    } catch (e) {
-      debugPrint("Error loading audio: $e");
-    }
+    _player.play(); // Pre-emptive play call
+    await _player.setAudioSource(
+      AudioSource.uri(Uri.parse(url)),
+    );
   }
 
   // Common Controls
   void pause() => _player.pause();
   void resume() => _player.play();
   void seek(Duration position) => _player.seek(position);
+  void stop() => _player.stop();
   void dispose() => _player.dispose();
 }
