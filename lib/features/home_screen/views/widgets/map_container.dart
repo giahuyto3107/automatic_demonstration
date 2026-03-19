@@ -38,6 +38,95 @@ class MapContainerState extends State<MapContainer> {
     super.dispose();
   }
 
+  void _showMapPopup(String apiKey) {
+    VietmapController? popupController;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: EdgeInsets.all(20.w), // Space around the popup
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusM.r)),
+        child: SizedBox(
+          height: 500.h,
+          width: double.infinity,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
+            child: Stack(
+              children: [
+                VietmapGL(
+                  styleString: 'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$apiKey',
+                  initialCameraPosition: CameraPosition(
+                    // Pass the current location so the popup starts where the user is
+                    target: _userLocation ?? const LatLng(10.762, 106.660),
+                    zoom: 16, // Higher zoom for the popup
+                  ),
+                  myLocationEnabled: false,
+                  onStyleLoadedCallback: () async {
+                    // Draw dot AFTER style is fully loaded
+                    if (_userLocation != null && popupController != null) {
+                      await popupController!.addCircle(
+                        CircleOptions(
+                          geometry: _userLocation!,
+                          circleRadius: 10,
+                          circleColor: const Color(0xffFF0000),
+                          circleStrokeColor: const Color(0xffFFFFFF),
+                          circleStrokeWidth: 3,
+                        ),
+                      );
+                    }
+                  },
+                  onMapCreated: (controller) async {
+                    popupController = controller;
+
+                    if (_userLocation != null) {
+                      await controller.addCircle(
+                        CircleOptions(
+                          geometry: _userLocation!,
+                          circleRadius: 10,
+                          circleColor: const Color(0xffFF0000), // Red
+                          circleStrokeColor: const Color(0xffFFFFFF), // White border
+                          circleStrokeWidth: 3,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                // Close button for the modal
+                Positioned(
+                  top: 10.h,
+                  right: 10.w,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  right: 10.w,
+                  bottom: 10.h,
+                  child: FloatingActionButton(
+                    backgroundColor: Colors.white,
+                    onPressed: () {
+                      if (_userLocation != null) {
+                        _mapController?.animateCamera(
+                            CameraUpdate.newLatLng(_userLocation!)
+                        );
+                      }
+                    },
+                    child: const Icon(Icons.my_location, color: Colors.blue),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _updateUserLocationMarker(LatLng location) async {
     if (_mapController == null) return;
 
@@ -202,6 +291,7 @@ class MapContainerState extends State<MapContainer> {
                 zoom: 13,
               ),
 
+              onMapClick: (point, latLng) => _showMapPopup(apiKey),
 
               onMapCreated: (VietmapController controller) {
                 setState(() {
