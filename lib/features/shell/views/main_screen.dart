@@ -1,11 +1,9 @@
-import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/features/home_screen/views/home_screen.dart';
 import 'package:automatic_demonstration/features/settings/views/settings_screen.dart';
 import 'package:automatic_demonstration/features/shell/providers/main_navigation_controller.dart';
 import 'package:automatic_demonstration/features/shell/views/nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});

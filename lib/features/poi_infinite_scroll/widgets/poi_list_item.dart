@@ -1,5 +1,4 @@
 import 'package:automatic_demonstration/features/poi_infinite_scroll/data/models/poi_model.dart';
-import 'package:automatic_demonstration/features/poi_infinite_scroll/data/models/routing_data.dart';
 import 'package:automatic_demonstration/features/poi_infinite_scroll/providers/smart_routing_provider.dart';
 import 'package:automatic_demonstration/features/poi_infinite_scroll/widgets/shimmer_widget.dart';
 import 'package:flutter/material.dart';

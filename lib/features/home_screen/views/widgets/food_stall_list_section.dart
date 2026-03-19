@@ -5,6 +5,7 @@ import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/data/repository/routing_repository.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
+import 'package:automatic_demonstration/features/home_screen/utils/duration_converter.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
@@ -540,63 +541,64 @@ class _RouteInfoRowState extends State<_RouteInfoRow> {
   @override
   Widget build(BuildContext context) {
     final distanceText = _routeDistance ?? '${widget.fallbackDistance.toStringAsFixed(1)}m';
-    final timeText = _routeTime ?? '${widget.audioDuration}s';
+
+    final duration = Duration(seconds: widget.audioDuration);
+    final timeText = _routeTime ?? formatDuration(duration);
 
     return Row(
       children: [
-        Icon(
-          FontAwesomeIcons.route,
-          size: AppConstants.fontS.r,
+        _buildInfoItem(
+          icon: FontAwesomeIcons.route,
+          text: distanceText,
           color: Color(0xffcaa01a),
+          isLoading: _isLoading,
         ),
-        SizedBox(width: AppConstants.spacingXS.w),
-        _isLoading
-            ? SizedBox(
-                width: AppConstants.fontM.r,
-                height: AppConstants.fontM.r,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: Color(0xffcaa01a),
-                ),
-              )
-            : Flexible(
-              child: Text(
-                distanceText,
-                style: TextStyle(
-                  fontSize: AppConstants.fontS.sp,
-                  color: Color(0xffcaa01a),
-                  fontWeight: FontWeight.w300,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+
         SizedBox(width: AppConstants.spacingL.w),
-        Icon(
-          FontAwesomeIcons.clock,
-          size: AppConstants.fontS.r,
+
+        // --- Time Section ---
+        _buildInfoItem(
+          icon: FontAwesomeIcons.clock,
+          text: timeText,
           color: Theme.of(context).textTheme.bodyMedium?.color,
+          isLoading: _isLoading,
         ),
-        SizedBox(width: AppConstants.spacingXS.w),
-        _isLoading
-            ? SizedBox(
-                width: AppConstants.fontS.r,
-                height: AppConstants.fontS.r,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                ),
-              )
-            : Flexible(
-              child: Text(
-                timeText,
-                style: TextStyle(
-                  fontSize: AppConstants.fontS.sp,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: FontWeight.w300,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
       ],
+    );
+  }
+
+  // Extracted helper widget to reduce code duplication
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String text,
+    required Color? color,
+    required bool isLoading,
+  }) {
+    return Expanded( // Changed to Expanded/Flexible to prevent overflow
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: AppConstants.fontS.r, color: color),
+          SizedBox(width: AppConstants.spacingXS.w),
+          isLoading
+              ? SizedBox(
+            width: AppConstants.fontS.r,
+            height: AppConstants.fontS.r,
+            child: CircularProgressIndicator(strokeWidth: 1.2, color: color),
+          )
+              : Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: AppConstants.fontS.sp,
+                color: color,
+                fontWeight: FontWeight.w300,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

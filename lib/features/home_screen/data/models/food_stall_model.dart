@@ -1,3 +1,5 @@
+import 'package:automatic_demonstration/core/config/env_config.dart';
+
 class FoodStallModel {
   final String name;
   final String address;
@@ -7,10 +9,10 @@ class FoodStallModel {
   final double? distance;
   final int triggerRadius;
   final String audioUrl;
+  final int audioDuration;
   final String imageUrl;
   final int? minPrice;
   final int? maxPrice;
-  final int audioDuration;
   final List<String> featuredReview;
   final double rating;
   final bool isTriggered;
@@ -24,11 +26,11 @@ class FoodStallModel {
     this.distance,
     this.triggerRadius = 0,
     this.audioUrl = '',
+    this.audioDuration = 0,
     this.imageUrl = '',
     this.minPrice,
     this.maxPrice,
     this.featuredReview = const [],
-    this.audioDuration = 0,
     this.rating = 0.0,
     this.isTriggered = false,
   });
@@ -42,12 +44,13 @@ class FoodStallModel {
     double? distance,
     int? triggerRadius,
     String? audioUrl,
+    int? audioDuration,
     String? imageUrl,
     int? minPrice,
     int? maxPrice,
     List<String>? featuredReview,
-    int? audioDuration,
     double? rating,
+    bool? isTriggered,
   }) {
     return FoodStallModel(
       name: name ?? this.name,
@@ -58,31 +61,45 @@ class FoodStallModel {
       distance: distance ?? this.distance,
       triggerRadius: triggerRadius ?? this.triggerRadius,
       audioUrl: audioUrl ?? this.audioUrl,
+      audioDuration: audioDuration ?? this.audioDuration,
       imageUrl: imageUrl ?? this.imageUrl,
       minPrice: minPrice ?? this.minPrice,
       maxPrice: maxPrice ?? this.maxPrice,
       featuredReview: featuredReview ?? this.featuredReview,
-      audioDuration: audioDuration ?? this.audioDuration,
-      rating: rating ?? this.rating
+      rating: rating ?? this.rating,
+      isTriggered: isTriggered ?? this.isTriggered,
     );
   }
 
   factory FoodStallModel.fromJson(Map<String, dynamic> json) {
+    String resolveUrl(String url) {
+      if (url.isEmpty || url.startsWith('http') || url.startsWith('https')) {
+        return url;
+      }
+      final baseUrl = EnvConfig.baseFileUrl;
+      if (baseUrl.isEmpty) return url;
+      return '$baseUrl${url.startsWith('/') ? '' : '/'}$url';
+    }
+
     return FoodStallModel(
       name: json['name'] as String? ?? '',
       address: json['address'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      latitude: json['latitude'] as double?,
-      longitude: json['longitude'] as double?,
-      distance: json['distance'] as double?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      distance: (json['distance'] as num?)?.toDouble(),
       triggerRadius: json['triggerRadius'] as int? ?? 0,
-      audioUrl: json['audioUrl'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String? ?? '',
+      audioUrl: resolveUrl(json['audioUrl'] as String? ?? ''),
+      audioDuration: json['audioDuration'] as int? ?? 0,
+      imageUrl: resolveUrl(json['imageUrl'] as String? ?? ''),
       minPrice: json['minPrice'] as int?,
       maxPrice: json['maxPrice'] as int?,
-      featuredReview: json['featuredReview'] as List<String>? ?? [],
-      audioDuration: json['audioDuration'] as int? ?? 0,
-      rating: json['rating'] as double? ?? 0,
+      featuredReview: (json['featuredReviews'] as List<dynamic>? ?? json['featuredReview'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+          [],
+      rating: (json['rating'] as num? ?? 0).toDouble(),
+      isTriggered: json['isTriggered'] as bool? ?? false,
     );
   }
 
@@ -96,12 +113,13 @@ class FoodStallModel {
       'distance': distance,
       'triggerRadius': triggerRadius,
       'audioUrl': audioUrl,
+      'audioDuration': audioDuration,
       'imageUrl': imageUrl,
       'minPrice': minPrice,
       'maxPrice': maxPrice,
       'featuredReview': featuredReview,
-      'audioDuration': audioDuration,
       'rating': rating,
+      'isTriggered': isTriggered,
     };
   }
 }

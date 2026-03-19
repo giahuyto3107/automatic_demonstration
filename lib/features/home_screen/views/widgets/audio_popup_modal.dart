@@ -1,16 +1,17 @@
-import 'dart:async';
-
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
-import 'package:automatic_demonstration/core/utils/utils.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/audio_notifier.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/audio_service_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:automatic_demonstration/core/utils/time_converter.dart';
 import 'package:automatic_demonstration/core/constants/constants.dart';
 import 'package:automatic_demonstration/core/theme/theme.dart';
+import 'package:just_audio/just_audio.dart';
 
-class AudioPopupModal extends StatefulWidget {
+class AudioPopupModal extends ConsumerStatefulWidget {
   final FoodStallModel foodStallModel;
 
   const AudioPopupModal({
@@ -19,21 +20,31 @@ class AudioPopupModal extends StatefulWidget {
   });
 
   @override
-  State<AudioPopupModal> createState() => _AudioPopupModalState();
+  ConsumerState<AudioPopupModal> createState() => _AudioPopupModalState();
 }
 
-class _AudioPopupModalState extends State<AudioPopupModal> {
-  bool isPlaying = true;
-
-  void toggleAudio() {
-    setState(() {
-      isPlaying = !isPlaying;
+class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
+  @override
+  void initState() {
+    super.initState();
+    // Load the audio if it's not already loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioProvider.notifier).load(widget.foodStallModel.audioUrl);
     });
   }
 
   @override
   Widget build (BuildContext context) {
     final surfaceColors = context.surfaceColors;
+
+    final audioAsync = ref.watch(audioProvider);
+    final playerStateAsync = ref.watch(audioPlayerStateProvider);
+
+    final playerState = playerStateAsync.value;
+    final isLoading = audioAsync.isLoading || 
+        playerState?.processingState == ProcessingState.loading || 
+        playerState?.processingState == ProcessingState.buffering;
+    final isPlaying = playerState?.playing ?? false;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -43,7 +54,7 @@ class _AudioPopupModalState extends State<AudioPopupModal> {
       child: Container(
         decoration: BoxDecoration(
           color: surfaceColors.secondarySurface,
-          borderRadius: .circular(AppConstants.radiusM.r)
+          borderRadius: BorderRadius.circular(AppConstants.radiusM.r)
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -51,7 +62,7 @@ class _AudioPopupModalState extends State<AudioPopupModal> {
             vertical: AppConstants.spacingM.h,
           ),
           child: Column(
-            mainAxisSize: .min,
+            mainAxisSize: MainAxisSize.min,
             children: [
               _ModalHeading(
                 foodStallModel: widget.foodStallModel
@@ -59,13 +70,19 @@ class _AudioPopupModalState extends State<AudioPopupModal> {
               SizedBox(height: AppConstants.spacingS.h,),
               _AudioSlider(
                 foodStallModel: widget.foodStallModel,
-                // maximumTimelineSec: widget.foodStallModel.audioLength,
-                isPlaying: isPlaying
               ),
               SizedBox(height: AppConstants.spacingXS.h,),
               _PlayStopToggleButton(
                 isPlaying: isPlaying,
-                onToggle: toggleAudio
+                isLoading: isLoading,
+                onToggle: () {
+                  final notifier = ref.read(audioProvider.notifier);
+                  if (isPlaying) {
+                    notifier.pause();
+                  } else {
+                    notifier.resume();
+                  }
+                },
               ),
               SizedBox(height: AppConstants.spacingL.h,),
               _TextContainer(
@@ -99,14 +116,14 @@ class _ModalHeading extends StatelessWidget {
         SizedBox(width: AppConstants.spacingM.w,),
 
         Column(
-          crossAxisAlignment: .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               foodStallModel.name,
               style: TextStyle(
                 fontSize: AppConstants.fontM.sp,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: .w700
+                fontWeight: FontWeight.w700
               ),
             ),
 
@@ -123,7 +140,7 @@ class _ModalHeading extends StatelessWidget {
                   style: TextStyle(
                     fontSize: AppConstants.fontXS.sp,
                     color: Theme.of(context).textTheme.bodyMedium?.color,
-                    fontWeight: .w400
+                    fontWeight: FontWeight.w400
                   ),
                 )
               ],
@@ -135,103 +152,43 @@ class _ModalHeading extends StatelessWidget {
   }
 }
 
-class _AudioSlider extends StatefulWidget {
-  final int maximumTimelineSec;
+class _AudioSlider extends ConsumerWidget {
   final FoodStallModel foodStallModel;
-  final bool isPlaying;
 
   const _AudioSlider({
     required this.foodStallModel,
-    this.maximumTimelineSec = 0,
-    required this.isPlaying,
   });
 
   @override
-  State<_AudioSlider> createState() => _AudioSliderState();
-}
+  Widget build (BuildContext context, WidgetRef ref) {
+    final positionAsync = ref.watch(audioPositionProvider);
+    final durationAsync = ref.watch(audioDurationProvider);
 
-class _AudioSliderState extends State<_AudioSlider> {
-  Timer? _timer;
-  late int totalDurationSeconds;
-  int currentAudioSecond = 0;
-  double currentAudioPercentage = 0.0;
+    final position = positionAsync.value ?? Duration.zero;
+    final totalDuration = durationAsync.value ?? Duration.zero;
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    totalDurationSeconds = widget.maximumTimelineSec;
-
-    if (widget.isPlaying) {
-      startProgress();
-    }
-  }
-
-  @override
-  void didUpdateWidget(_AudioSlider oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isPlaying != oldWidget.isPlaying) {
-      if (widget.isPlaying) {
-        startProgress();
-      } else {
-        stopProgress();
-      }
-    }
-  }
-
-  void startProgress() {
-    _timer?.cancel();
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        double step = 1.0 / totalDurationSeconds;
-
-        if (currentAudioPercentage + step >= 1.0) {
-          currentAudioPercentage = 1.0;
-          currentAudioSecond = totalDurationSeconds;
-          timer.cancel(); // Stop when finished
-        } else {
-          currentAudioPercentage += step;
-          currentAudioSecond++;
-        }
-      });
-    });
-  }
-
-  void stopProgress() {
-    _timer?.cancel();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel(); // Always cancel timers to prevent memory leaks
-    super.dispose();
-  }
-
-  @override
-  Widget build (BuildContext context) {
     return Column(
       children: [
-        IgnorePointer(
-          ignoring: true,
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackShape: CustomTrackShape(),
-              overlayShape: SliderComponentShape.noOverlay,
-            ),
-            child: Slider(
-              value: currentAudioPercentage,
-              onChanged: (val) {}, // Changed to non-null so it looks "active"
-              activeColor: AppColors.primaryColor,
-              inactiveColor: AppColors.sliderInactiveColor,
-              thumbColor: AppColors.sliderThumbColor,
-            ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackShape: CustomTrackShape(),
+            overlayShape: SliderComponentShape.noOverlay,
+          ),
+          child: Slider(
+            value: position.inSeconds.toDouble().clamp(0, totalDuration.inSeconds.toDouble()),
+            max: totalDuration.inSeconds.toDouble() > 0 ? totalDuration.inSeconds.toDouble() : 1.0,
+            onChanged: (val) {
+              ref.read(audioProvider.notifier).seek(Duration(seconds: val.toInt()));
+            },
+            activeColor: AppColors.primaryColor,
+            inactiveColor: AppColors.sliderInactiveColor,
+            thumbColor: AppColors.sliderThumbColor,
           ),
         ),
 
         _AudioTimeIndicator(
-          currentAudioSecond: currentAudioSecond,
-          totalDurationSeconds: totalDurationSeconds
+          position: position,
+          duration: totalDuration,
         )
       ],
     );
@@ -239,36 +196,32 @@ class _AudioSliderState extends State<_AudioSlider> {
 }
 
 class _AudioTimeIndicator extends StatelessWidget {
-  final int currentAudioSecond;
-  final int totalDurationSeconds;
+  final Duration position;
+  final Duration duration;
 
   const _AudioTimeIndicator({
-    required this.currentAudioSecond,
-    required this.totalDurationSeconds
+    required this.position,
+    required this.duration
   });
 
   @override
   Widget build (BuildContext context) {
     return Row(
-      mainAxisAlignment: .spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          "${TimeConverter.secondToMinuteString(
-            currentAudioSecond
-          )}:${TimeConverter.secondToSecondString(
-            currentAudioSecond
-          )}",
+          TimeConverter.secondToMinuteSecondString(position.inSeconds),
           style: TextStyle(
             fontSize: AppConstants.fontS.sp,
-            fontWeight: .w500,
+            fontWeight: FontWeight.w500,
             color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         ),
         Text(
-          TimeConverter.secondToMinuteSecondString(totalDurationSeconds),
+          TimeConverter.secondToMinuteSecondString(duration.inSeconds),
           style: TextStyle(
             fontSize: AppConstants.fontS.sp,
-            fontWeight: .w500,
+            fontWeight: FontWeight.w500,
             color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         )
@@ -279,34 +232,42 @@ class _AudioTimeIndicator extends StatelessWidget {
 
 class _PlayStopToggleButton extends StatelessWidget {
   final bool isPlaying;
-  final Function() onToggle;
+  final bool isLoading;
+  final VoidCallback onToggle;
 
   const _PlayStopToggleButton({
     required this.isPlaying,
+    required this.isLoading,
     required this.onToggle,
   });
 
   @override
   Widget build (BuildContext context) {
     return GestureDetector(
-      onTap: onToggle,
+      onTap: isLoading ? null : onToggle,
       child: Center(
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.primaryColor,
-            borderRadius: .circular(AppConstants.radiusCircular.r),
+            borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
           ),
-          padding: EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingS.w,
-            vertical: AppConstants.spacingS.w,
-          ),
-          child: Icon(
-            isPlaying
-              ? FontAwesomeIcons.pause
-              : FontAwesomeIcons.play,
-            color: AppColors.textOnDark,
-            size: AppConstants.fontXXXL.r,
-          ),
+          padding: EdgeInsets.all(AppConstants.spacingS.w),
+          child: isLoading
+            ? SizedBox(
+                width: AppConstants.fontXXXL.r,
+                height: AppConstants.fontXXXL.r,
+                child: const CircularProgressIndicator(
+                  color: AppColors.textOnDark,
+                  strokeWidth: 2,
+                ),
+              )
+            : Icon(
+                isPlaying
+                  ? FontAwesomeIcons.pause
+                  : FontAwesomeIcons.play,
+                color: AppColors.textOnDark,
+                size: AppConstants.fontXXXL.r,
+              ),
         ),
       ),
     );
@@ -327,7 +288,7 @@ class _TextContainer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: surfaceColors.lighterPrimarySurface,
-        borderRadius: .circular(AppConstants.radiusM.r),
+        borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
       ),
       padding: EdgeInsets.symmetric(
         horizontal: AppConstants.spacingL.w,
@@ -336,8 +297,8 @@ class _TextContainer extends StatelessWidget {
       child: Text(
         foodStallModel.description,
         style: TextStyle(
-          fontWeight: .w400,
-          fontSize: AppConstants.spacingM.sp,
+          fontWeight: FontWeight.w400,
+          fontSize: AppConstants.fontS.sp,
           color: Theme.of(context).textTheme.bodyMedium?.color,
         )
       ),
@@ -357,7 +318,6 @@ class CustomTrackShape extends RoundedRectSliderTrackShape {
     final double trackHeight = sliderTheme.trackHeight ?? 2;
     final double trackLeft = offset.dx;
     final double trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
-    // This dictates the width. We use the full parent width without subtracting thumb radius.
     final double trackWidth = parentBox.size.width;
 
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);

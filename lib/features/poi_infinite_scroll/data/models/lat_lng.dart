@@ -1,3 +1,4 @@
+// ignore: unused_import
 import 'dart:math' as math;
 
 /// Lightweight latitude/longitude model.
