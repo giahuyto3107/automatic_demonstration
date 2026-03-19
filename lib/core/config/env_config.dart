@@ -6,9 +6,19 @@ class EnvConfig {
   static String get baseUrl {
     final envBaseUrl = dotenv.env['BASE_URL'] ??
       dotenv.env['DEV_BASE_URL'] ??
-      'localhost:8080/api/v1';
+      'http://localhost:8080/api/v1';
 
     return envBaseUrl;
+  }
+
+  /// Extracts the origin (scheme://host:port) from the baseUrl for static files.
+  static String get baseFileUrl {
+    try {
+      final uri = Uri.parse(baseUrl);
+      return uri.origin;
+    } catch (e) {
+      return '';
+    }
   }
 
   static String get devBaseUrl {

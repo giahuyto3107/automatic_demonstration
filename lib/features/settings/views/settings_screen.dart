@@ -1,7 +1,6 @@
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/constants/app_strings.dart';
 import 'package:automatic_demonstration/core/providers/app_theme.dart';
-import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
