@@ -27,10 +27,6 @@ class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
   @override
   void initState() {
     super.initState();
-    // Load the audio if it's not already loaded
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(audioProvider.notifier).load(widget.foodStallModel.audioUrl);
-    });
   }
 
   @override
@@ -44,7 +40,8 @@ class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
     final isLoading = audioAsync.isLoading || 
         playerState?.processingState == ProcessingState.loading || 
         playerState?.processingState == ProcessingState.buffering;
-    final isPlaying = playerState?.playing ?? false;
+    final isCompleted = playerState?.processingState == ProcessingState.completed;
+    final isPlaying = (playerState?.playing ?? false) && !isCompleted;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -77,7 +74,11 @@ class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
                 isLoading: isLoading,
                 onToggle: () {
                   final notifier = ref.read(audioProvider.notifier);
-                  if (isPlaying) {
+                  final playerState = ref.read(audioPlayerStateProvider).value;
+                  if (playerState?.processingState == ProcessingState.completed) {
+                    notifier.seek(Duration.zero);
+                    notifier.resume();
+                  } else if (isPlaying) {
                     notifier.pause();
                   } else {
                     notifier.resume();
@@ -96,7 +97,7 @@ class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
   }
 }
 
-class _ModalHeading extends StatelessWidget {
+class _ModalHeading extends ConsumerWidget {
   final FoodStallModel foodStallModel;
 
   const _ModalHeading({
@@ -104,7 +105,12 @@ class _ModalHeading extends StatelessWidget {
   });
 
   @override
-  Widget build (BuildContext context) {
+  Widget build (BuildContext context, WidgetRef ref) {
+    final playerStateAsync = ref.watch(audioPlayerStateProvider);
+    final playerState = playerStateAsync.value;
+    final isCompleted = playerState?.processingState == ProcessingState.completed;
+    final isPlaying = (playerState?.playing ?? false) && !isCompleted;
+
     return Row(
       children: [
         Icon(
@@ -136,7 +142,7 @@ class _ModalHeading extends StatelessWidget {
                 ),
                 SizedBox(width: AppConstants.spacingS.w,),
                 Text(
-                  AppStrings.audioIsPlaying,
+                  isPlaying ? AppStrings.audioIsPlaying : AppStrings.audioIsStopped,
                   style: TextStyle(
                     fontSize: AppConstants.fontXS.sp,
                     color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -230,7 +236,7 @@ class _AudioTimeIndicator extends StatelessWidget {
   }
 }
 
-class _PlayStopToggleButton extends StatelessWidget {
+class _PlayStopToggleButton extends ConsumerWidget {
   final bool isPlaying;
   final bool isLoading;
   final VoidCallback onToggle;
@@ -242,7 +248,11 @@ class _PlayStopToggleButton extends StatelessWidget {
   });
 
   @override
-  Widget build (BuildContext context) {
+  Widget build (BuildContext context, WidgetRef ref) {
+    final playerStateAsync = ref.watch(audioPlayerStateProvider);
+    final playerState = playerStateAsync.value;
+    final isCompleted = playerState?.processingState == ProcessingState.completed;
+
     return GestureDetector(
       onTap: isLoading ? null : onToggle,
       child: Center(
@@ -264,7 +274,7 @@ class _PlayStopToggleButton extends StatelessWidget {
             : Icon(
                 isPlaying
                   ? FontAwesomeIcons.pause
-                  : FontAwesomeIcons.play,
+                  : (isCompleted ? FontAwesomeIcons.rotateRight : FontAwesomeIcons.play),
                 color: AppColors.textOnDark,
                 size: AppConstants.fontXXXL.r,
               ),

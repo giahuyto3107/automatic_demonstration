@@ -9,22 +9,27 @@ class AudioNotifier extends _$AudioNotifier {
   AsyncValue<String?> build() => const AsyncData(null);
 
   Future<void> load(String url) async {
-    if (state.value == url) {
-      // Audio already loaded, don't restart
-      return;
-    }
+    if (state.value == url) return;
+
+    if (state.isLoading && state.value == url) return;
 
     state = const AsyncLoading();
     final service = ref.read(audioServiceProvider);
     try {
       await service.initAudio(url);
+      if (!state.isLoading) return;
       state = AsyncData(url);
     } catch (e, st) {
+      if (e.toString().contains('interrupted')) {
+        // Ignore interruption as it means another load started
+        return;
+      }
       state = AsyncError(e, st);
     }
   }
 
   void pause() => ref.read(audioServiceProvider).pause();
   void resume() => ref.read(audioServiceProvider).resume();
+  void stop() => ref.read(audioServiceProvider).stop();
   void seek(Duration position) => ref.read(audioServiceProvider).seek(position);
 }
