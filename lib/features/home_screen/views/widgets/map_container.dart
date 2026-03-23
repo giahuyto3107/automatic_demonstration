@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:automatic_demonstration/core/config/config.dart';
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/utils/polyline_decoder.dart';
+import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 
 class MapContainer extends StatefulWidget {
-  const MapContainer({super.key});
+  final List<FoodStallModel> stalls;
+
+  const MapContainer({super.key, required this.stalls});
 
   static final GlobalKey<MapContainerState> globalKey = GlobalKey<MapContainerState>();
 
@@ -23,13 +26,28 @@ class MapContainerState extends State<MapContainer> {
   StreamSubscription<Position>? _positionStreamSubscription;
   Circle? _userLocationCircle;
   bool _hasRoute = false;
+  bool _isStyleLoaded = false;
+  bool _hasAutoFocusedStalls = false;
 
-  /// Expose user location for routing providers.
+  final List<Circle> _stallCircles = [];
+
   LatLng? get userLocation => _userLocation;
-
   @override
   void initState() {
     super.initState();
+    debugPrint('[MapContainer] initState | initial stalls: ${widget.stalls.length}');
+  }
+
+  @override
+  void didUpdateWidget(MapContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    debugPrint(
+      '[MapContainer] didUpdateWidget | old: ${oldWidget.stalls.length} | new: ${widget.stalls.length} | mapReady: ${_mapController != null} | styleReady: $_isStyleLoaded',
+    );
+
+    if (widget.stalls != oldWidget.stalls && _mapController != null && _isStyleLoaded) {
+      displayStalls(widget.stalls);
+    }
   }
 
   @override
@@ -40,6 +58,41 @@ class MapContainerState extends State<MapContainer> {
 
   void _showMapPopup(String apiKey) {
     VietmapController? popupController;
+    bool isPopupStyleLoaded = false;
+    final List<Circle> popupStallCircles = [];
+
+    Future<void> displayPopupStalls() async {
+      if (popupController == null || !isPopupStyleLoaded) {
+        debugPrint('[MapContainer][Popup] display stalls skipped | controller: ${popupController != null} | style: $isPopupStyleLoaded');
+        return;
+      }
+
+      for (final circle in popupStallCircles) {
+        await popupController!.removeCircle(circle);
+      }
+      popupStallCircles.clear();
+
+      debugPrint('[MapContainer][Popup] rendering stalls: ${widget.stalls.length}');
+
+      for (final stall in widget.stalls) {
+        try {
+          final circle = await popupController!.addCircle(
+            CircleOptions(
+              geometry: stall.latLng,
+              circleRadius: 10,
+              circleColor: const Color(0xffffa621),
+              circleStrokeColor: const Color(0xffFFFFFF),
+              circleStrokeWidth: 3,
+            ),
+          );
+          popupStallCircles.add(circle);
+        } catch (error) {
+          debugPrint('[MapContainer][Popup] addCircle failed | id: ${stall.id} | error: $error');
+        }
+      }
+
+      debugPrint('[MapContainer][Popup] rendered stalls: ${popupStallCircles.length}/${widget.stalls.length}');
+    }
 
     showDialog(
       context: context,
@@ -62,6 +115,7 @@ class MapContainerState extends State<MapContainer> {
                   ),
                   myLocationEnabled: false,
                   onStyleLoadedCallback: () async {
+                    isPopupStyleLoaded = true;
                     // Draw dot AFTER style is fully loaded
                     if (_userLocation != null && popupController != null) {
                       await popupController!.addCircle(
@@ -74,9 +128,12 @@ class MapContainerState extends State<MapContainer> {
                         ),
                       );
                     }
+
+                    await displayPopupStalls();
                   },
                   onMapCreated: (controller) async {
                     popupController = controller;
+                    debugPrint('[MapContainer][Popup] onMapCreated fired');
 
                     if (_userLocation != null) {
                       await controller.addCircle(
@@ -89,6 +146,8 @@ class MapContainerState extends State<MapContainer> {
                         ),
                       );
                     }
+
+                    await displayPopupStalls();
                   },
                 ),
                 // Close button for the modal
@@ -125,6 +184,131 @@ class MapContainerState extends State<MapContainer> {
         ),
       ),
     );
+  }
+
+  Future<void> displayStalls(List<FoodStallModel> stalls) async {
+    debugPrint(
+      '[MapContainer] displayStalls called | count: ${stalls.length} | mapReady: ${_mapController != null} | styleReady: $_isStyleLoaded',
+    );
+
+    if (_mapController == null) {
+      debugPrint('[MapContainer] displayStalls skipped: map controller is null');
+      return;
+    }
+
+    if (!_isStyleLoaded) {
+      debugPrint('[MapContainer] displayStalls skipped: style not loaded yet');
+      return;
+    }
+
+    await clearStalls();
+    debugPrint('[MapContainer] cleared old stall circles');
+
+    for (final stall in stalls) {
+      final isCoordinateValid =
+          stall.latitude >= -90 &&
+          stall.latitude <= 90 &&
+          stall.longitude >= -180 &&
+          stall.longitude <= 180;
+
+      if (!isCoordinateValid) {
+        debugPrint(
+          '[MapContainer] skip invalid coordinate | id: ${stall.id} | name: ${stall.name} | lat: ${stall.latitude} | lng: ${stall.longitude}',
+        );
+        continue;
+      }
+
+      debugPrint('[MapContainer] adding circle | id: ${stall.id} | name: ${stall.name} | lat: ${stall.latitude} | lng: ${stall.longitude}');
+
+      try {
+        final circle = await _mapController!.addCircle(
+          CircleOptions(
+            geometry: stall.latLng,
+            circleRadius: 10,
+            circleColor: const Color(0xffffa621),
+            circleStrokeColor: const Color(0xffFFFFFF),
+            circleStrokeWidth: 3,
+          ),
+        );
+
+        _stallCircles.add(circle);
+        debugPrint('[MapContainer] circle added successfully | id: ${stall.id}');
+      } catch (error, stackTrace) {
+        debugPrint('[MapContainer] addCircle failed | id: ${stall.id} | error: $error');
+        debugPrint('$stackTrace');
+      }
+    }
+
+    debugPrint('[MapContainer] displayStalls completed | rendered: ${_stallCircles.length}/${stalls.length}');
+
+    if (_stallCircles.isNotEmpty && !_hasAutoFocusedStalls) {
+      await _focusCameraToStalls(stalls);
+      _hasAutoFocusedStalls = true;
+    }
+  }
+
+  Future<void> _focusCameraToStalls(List<FoodStallModel> stalls) async {
+    if (_mapController == null || stalls.isEmpty) {
+      debugPrint('[MapContainer] focus skipped: map not ready or stalls empty');
+      return;
+    }
+
+    final validStalls = stalls.where((stall) {
+      return stall.latitude >= -90 &&
+          stall.latitude <= 90 &&
+          stall.longitude >= -180 &&
+          stall.longitude <= 180;
+    }).toList();
+
+    if (validStalls.isEmpty) {
+      debugPrint('[MapContainer] focus skipped: no valid stall coordinates');
+      return;
+    }
+
+    final minLat = validStalls
+        .map((stall) => stall.latitude)
+        .reduce((a, b) => a < b ? a : b);
+    final maxLat = validStalls
+        .map((stall) => stall.latitude)
+        .reduce((a, b) => a > b ? a : b);
+    final minLng = validStalls
+        .map((stall) => stall.longitude)
+        .reduce((a, b) => a < b ? a : b);
+    final maxLng = validStalls
+        .map((stall) => stall.longitude)
+        .reduce((a, b) => a > b ? a : b);
+
+    try {
+      final bounds = LatLngBounds(
+        southwest: LatLng(minLat, minLng),
+        northeast: LatLng(maxLat, maxLng),
+      );
+
+      await _mapController!.animateCamera(
+        CameraUpdate.newLatLngBounds(
+          bounds,
+          left: 40,
+          top: 40,
+          right: 40,
+          bottom: 120,
+        ),
+      );
+
+      debugPrint(
+        '[MapContainer] camera focused to stalls | bounds: ($minLat, $minLng) -> ($maxLat, $maxLng) | count: ${validStalls.length}',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('[MapContainer] camera focus failed: $error');
+      debugPrint('$stackTrace');
+    }
+  }
+
+  Future<void> clearStalls() async {
+    if (_mapController == null || _stallCircles.isEmpty) return;
+    for (final circle in _stallCircles) {
+      await _mapController!.removeCircle(circle);
+    }
+    _stallCircles.clear();
   }
 
   Future<void> _updateUserLocationMarker(LatLng location) async {
@@ -297,14 +481,21 @@ class MapContainerState extends State<MapContainer> {
                 setState(() {
                   _mapController = controller;
                 });
+                debugPrint('[MapContainer] onMapCreated fired');
                 startLiveTracking();
+              },
+              onStyleLoadedCallback: () {
+                _isStyleLoaded = true;
+                _hasAutoFocusedStalls = false;
+                debugPrint('[MapContainer] onStyleLoadedCallback fired | stalls: ${widget.stalls.length}');
+                debugPrint('[MapContainer] triggering displayStalls from onStyleLoadedCallback (main small map)');
+                // Always trigger; displayStalls has its own null/style guards.
+                displayStalls(widget.stalls);
               },
 
               myLocationEnabled: true,
               myLocationRenderMode: MyLocationRenderMode.compass,
             ),
-
-
           ),
 
           Positioned(

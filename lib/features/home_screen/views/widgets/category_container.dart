@@ -115,18 +115,6 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
     List<String> audioCategoryItems = ['Tất cả', 'Đã nghe', 'Lọc'];
     int lastCategoryItemIndex = audioCategoryItems.length - 1;
 
-    // Get count for each category
-    int getCountForIndex(int index) {
-      switch (index) {
-        case 0:
-          return widget.allCount;
-        case 1:
-          return widget.listenedCount;
-        default:
-          return 0;
-      }
-    }
-
     return CompositedTransformTarget(
       link: _layerLink,
       child: Container(
@@ -142,8 +130,6 @@ class _AudioCategoryContainerState extends State<AudioCategoryContainer> {
 
             bool isSelected = selectedIndex == index;
             bool isLastCategoryItem = index == lastCategoryItemIndex;
-
-            int listNumber = getCountForIndex(index);
 
             Widget itemContent = Text(
               isLastCategoryItem ? item : item,

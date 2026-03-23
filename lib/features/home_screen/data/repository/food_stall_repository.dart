@@ -14,6 +14,8 @@ class FoodStallRepository {
 
       );
 
+      print('[FoodStallRepository] response type: ${response.data.runtimeType}');
+
       if (response.data == null) {
         throw Exception("No food stall found");
       }
@@ -23,9 +25,14 @@ class FoodStallRepository {
       }
       final List<dynamic> foodStallsData = response.data;
 
-      return foodStallsData
+      print('[FoodStallRepository] raw stalls count: ${foodStallsData.length}');
+
+      final stalls = foodStallsData
           .map((json) => FoodStallModel.fromJson(json as Map<String, dynamic>))
           .toList();
+
+      print('[FoodStallRepository] parsed stalls count: ${stalls.length}');
+      return stalls;
     } catch (e) {
       throw Exception("Failed to fetch food stalls: ${e.toString()}");
     }
