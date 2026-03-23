@@ -4,6 +4,7 @@ import 'package:automatic_demonstration/core/providers/app_theme.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/gps_enum.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +12,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build (BuildContext context) {
+  Widget build (BuildContext context, WidgetRef ref) {
     final backgroundGradients = context.backgroundGradients;
+    final foodStallAsync = ref.watch(foodStallProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -28,29 +30,51 @@ class HomeScreen extends StatelessWidget {
             children: [
               const _HeadingRow(),
               Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: MapContainer(key: MapContainer.globalKey)
-                    ),
-                    Expanded(
-                      flex: 7,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppConstants.spacingXL.w,
-                        ),
-                        child: Column(
-                          children: [
-                            SizedBox(height: AppConstants.spacingM.h,),
-                            Expanded(
-                              child: FoodStallListSection()
-                            ),
-                          ],
-                        ),
+                child: foodStallAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, stackTrace) => Center(
+                    child: Text(
+                      'Lỗi tải dữ liệu: $error',
+                      style: TextStyle(
+                        fontSize: AppConstants.fontM.sp,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
-                  ],
+                  ),
+                  data: (foodStalls) {
+                    debugPrint('[HomeScreen] foodStallProvider data received | count: ${foodStalls.length}');
+                    return Column(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: MapContainer(
+                            key: MapContainer.globalKey,
+                            stalls: foodStalls,
+                          )
+                        ),
+                        Expanded(
+                          flex: 7,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppConstants.spacingXL.w,
+                            ),
+                            child: Column(
+                              children: [
+                                SizedBox(height: AppConstants.spacingM.h,),
+                                Expanded(
+                                  child: FoodStallListSection(
+                                    foodStalls: foodStalls,
+                                  )
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 )
               )
             ],

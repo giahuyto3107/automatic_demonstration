@@ -6,7 +6,6 @@ import 'package:automatic_demonstration/features/home_screen/data/models/food_st
 import 'package:automatic_demonstration/features/home_screen/data/repository/routing_repository.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_notifier.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_service_provider.dart';
-import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
 import 'package:automatic_demonstration/features/home_screen/utils/duration_converter.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/category_container.dart';
@@ -20,7 +19,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:just_audio/just_audio.dart';
 
 class FoodStallListSection extends ConsumerStatefulWidget {
-  const FoodStallListSection({super.key});
+  final List<FoodStallModel> foodStalls;
+
+  const FoodStallListSection({super.key, required this.foodStalls});
 
   @override
   ConsumerState<FoodStallListSection> createState() => _FoodStallListSectionState();
@@ -36,6 +37,9 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   @override
   void initState() {
     super.initState();
+    _foodStallModels = widget.foodStalls;
+    _allowFoodStallIndexes = List.generate(widget.foodStalls.length, (_) => true);
+    
     _pageController = PageController(viewportFraction: 0.9);
 
     _pageController.addListener(() {
@@ -120,51 +124,43 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   }
 
   @override
+  void didUpdateWidget(FoodStallListSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.foodStalls != oldWidget.foodStalls) {
+      _foodStallModels = widget.foodStalls;
+      if (_allowFoodStallIndexes.length != widget.foodStalls.length) {
+        _allowFoodStallIndexes = List.generate(widget.foodStalls.length, (_) => true);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final foodStallAsync = ref.watch(foodStallProvider);
+    if (_foodStallModels.isEmpty && widget.foodStalls.isNotEmpty) {
+      _foodStallModels = widget.foodStalls;
+      _allowFoodStallIndexes =
+          List.generate(widget.foodStalls.length, (_) => true);
+    }
 
-    return foodStallAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (error, stackTrace) => Center(
-        child: Text(
-          'Lỗi tải dữ liệu: $error',
-          style: TextStyle(
-            fontSize: AppConstants.fontM.sp,
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-          ),
-        ),
-      ),
-      data: (foodStalls) {
-        // Sync state fields when data arrives or changes
-        if (_foodStallModels.length != foodStalls.length) {
-          _foodStallModels = foodStalls;
-          _allowFoodStallIndexes =
-              List.generate(foodStalls.length, (_) => true);
-        }
-
-        return _BuildUI(
-          foodStallModels: _foodStallModels,
-          visibleIndices: visibleIndices,
-          allowFoodStallIndexes: _allowFoodStallIndexes,
-          pageController: _pageController,
-          currentPage: _currentPage,
-          selectedCategoryIndex: _selectedCategoryIndex,
-          onPlay: _onPlay,
-          onSkip: _onSkip,
-          onRestore: _onRestore,
-          onCategoryChanged: (int index) {
-            setState(() {
-              _selectedCategoryIndex = index;
-            });
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_pageController.hasClients) {
-                _pageController.jumpToPage(0);
-              }
-            });
-          },
-        );
+    return _BuildUI(
+      foodStallModels: _foodStallModels,
+      visibleIndices: visibleIndices,
+      allowFoodStallIndexes: _allowFoodStallIndexes,
+      pageController: _pageController,
+      currentPage: _currentPage,
+      selectedCategoryIndex: _selectedCategoryIndex,
+      onPlay: _onPlay,
+      onSkip: _onSkip,
+      onRestore: _onRestore,
+      onCategoryChanged: (int index) {
+        setState(() {
+          _selectedCategoryIndex = index;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(0);
+          }
+        });
       },
     );
   }
@@ -634,7 +630,6 @@ class _ActionButtonsRow extends ConsumerWidget {
   Future<void> _showRouteOnMap(BuildContext context) async {
     final latitude = foodStallModel.latitude;
     final longitude = foodStallModel.longitude;
-    if (latitude == null || longitude == null) return;
 
     try {
       final position = await Geolocator.getCurrentPosition(

@@ -1,11 +1,15 @@
+import 'dart:ui';
+
 import 'package:automatic_demonstration/core/config/env_config.dart';
+import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 
 class FoodStallModel {
+  final int id;
   final String name;
   final String address;
   final String description;
-  final double? latitude;
-  final double? longitude;
+  final double latitude;
+  final double longitude;
   final double? distance;
   final int triggerRadius;
   final String audioUrl;
@@ -16,13 +20,15 @@ class FoodStallModel {
   final List<String> featuredReview;
   final double rating;
   final bool isTriggered;
+  final Color? iconColor;
 
   FoodStallModel({
+    this.id = 0,
     this.name = '',
     this.address = '',
     this.description = '',
-    this.latitude,
-    this.longitude,
+    required this.latitude,
+    required this.longitude,
     this.distance,
     this.triggerRadius = 0,
     this.audioUrl = '',
@@ -33,9 +39,13 @@ class FoodStallModel {
     this.featuredReview = const [],
     this.rating = 0.0,
     this.isTriggered = false,
+    this.iconColor,
   });
 
+  LatLng get latLng => LatLng(latitude, longitude);
+
   FoodStallModel copyWith({
+    int? id,
     String? name,
     String? address,
     String? description,
@@ -53,6 +63,7 @@ class FoodStallModel {
     bool? isTriggered,
   }) {
     return FoodStallModel(
+      id: id ?? this.id,
       name: name ?? this.name,
       address: address ?? this.address,
       description: description ?? this.description,
@@ -82,11 +93,12 @@ class FoodStallModel {
     }
 
     return FoodStallModel(
+      id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       address: json['address'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      latitude: (json['latitude'] as num?)?.toDouble(),
-      longitude: (json['longitude'] as num?)?.toDouble(),
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
       distance: (json['distance'] as num?)?.toDouble(),
       triggerRadius: json['triggerRadius'] as int? ?? 0,
       audioUrl: resolveUrl(json['audioUrl'] as String? ?? ''),
@@ -105,6 +117,7 @@ class FoodStallModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'address': address,
       'description': description,
