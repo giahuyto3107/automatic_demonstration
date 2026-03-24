@@ -41,7 +41,7 @@ final class AudioNotifierProvider
   }
 }
 
-String _$audioNotifierHash() => r'e16c57a1d07adca2f33ffd3995b0b0ba8de22bb2';
+String _$audioNotifierHash() => r'6db9290edd9678ad0f3c9202ce88a665a1b934dc';
 
 abstract class _$AudioNotifier extends $Notifier<AsyncValue<String?>> {
   AsyncValue<String?> build();

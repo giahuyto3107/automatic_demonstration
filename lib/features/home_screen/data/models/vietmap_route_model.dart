@@ -75,7 +75,7 @@ class RoutePath {
     if (distance >= 1000) {
       return '${distanceInKm.toStringAsFixed(1)} km';
     }
-    return '${distance.toStringAsFixed(0)} m';
+    return '${distance.toStringAsFixed(1)} m';
   }
 
   /// Formatted time string (e.g. "5 phút").

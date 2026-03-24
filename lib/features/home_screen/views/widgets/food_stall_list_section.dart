@@ -399,8 +399,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                // "${foodStallModel.distance!.toStringAsFixed(1)}m",
-                "${foodStallModel.distance ?? 0}m",
+                "${foodStallModel.distance?.toStringAsFixed(1) ?? 0}m",
                 style: TextStyle(
                   fontWeight: .w500,
                   fontSize: AppConstants.fontXS.sp,
