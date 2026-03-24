@@ -21,6 +21,7 @@ class FoodStallModel {
   final double rating;
   final bool isTriggered;
   final Color? iconColor;
+  final int? priority;
 
   FoodStallModel({
     this.id = 0,
@@ -40,6 +41,7 @@ class FoodStallModel {
     this.rating = 0.0,
     this.isTriggered = false,
     this.iconColor,
+    this.priority,
   });
 
   LatLng get latLng => LatLng(latitude, longitude);
@@ -61,6 +63,7 @@ class FoodStallModel {
     List<String>? featuredReview,
     double? rating,
     bool? isTriggered,
+    int? priority,
   }) {
     return FoodStallModel(
       id: id ?? this.id,
@@ -79,17 +82,37 @@ class FoodStallModel {
       featuredReview: featuredReview ?? this.featuredReview,
       rating: rating ?? this.rating,
       isTriggered: isTriggered ?? this.isTriggered,
+      priority: priority ?? this.priority,
     );
   }
 
   factory FoodStallModel.fromJson(Map<String, dynamic> json) {
-    String resolveUrl(String url) {
-      if (url.isEmpty || url.startsWith('http') || url.startsWith('https')) {
+    String resolveUrl(String url, {bool isAudio = false}) {
+      if (url.isEmpty) return url;
+
+      // Fix cases where absolute URL is provided but missing /audio/ path
+      if (url.startsWith('http') || url.startsWith('https')) {
+        if (isAudio && !url.contains('/audio/') && url.endsWith('.mp3')) {
+          final uri = Uri.parse(url);
+          return '${uri.origin}/audio${uri.path}';
+        }
         return url;
       }
+
       final baseUrl = EnvConfig.baseFileUrl;
       if (baseUrl.isEmpty) return url;
-      return '$baseUrl${url.startsWith('/') ? '' : '/'}$url';
+
+      if (isAudio) {
+        // Assume local audio assets from DB usually miss the /audio/ prefix
+        final path = url.startsWith('/audio/')
+            ? url
+            : (url.startsWith('/') ? '/audio$url' : '/audio/$url');
+        return '$baseUrl$path';
+      } else {
+        // Standard resolution for images etc.
+        final path = url.startsWith('/') ? url : '/$url';
+        return '$baseUrl$path';
+      }
     }
 
     return FoodStallModel(
@@ -101,17 +124,20 @@ class FoodStallModel {
       longitude: (json['longitude'] as num).toDouble(),
       distance: (json['distance'] as num?)?.toDouble(),
       triggerRadius: json['triggerRadius'] as int? ?? 0,
-      audioUrl: resolveUrl(json['audioUrl'] as String? ?? ''),
+      audioUrl: resolveUrl(json['audioUrl'] as String? ?? '', isAudio: true),
       audioDuration: json['audioDuration'] as int? ?? 0,
       imageUrl: resolveUrl(json['imageUrl'] as String? ?? ''),
       minPrice: json['minPrice'] as int?,
       maxPrice: json['maxPrice'] as int?,
-      featuredReview: (json['featuredReviews'] as List<dynamic>? ?? json['featuredReview'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
+      featuredReview:
+          (json['featuredReviews'] as List<dynamic>? ??
+                  json['featuredReview'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
           [],
       rating: (json['rating'] as num? ?? 0).toDouble(),
       isTriggered: json['isTriggered'] as bool? ?? false,
+      priority: json['priority'] as int?,
     );
   }
 
@@ -133,6 +159,7 @@ class FoodStallModel {
       'featuredReview': featuredReview,
       'rating': rating,
       'isTriggered': isTriggered,
+      'priority': priority,
     };
   }
 }

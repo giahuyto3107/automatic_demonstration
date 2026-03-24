@@ -36,5 +36,9 @@ abstract class Endpoints {
 
   static const String syncStalls = '$_stalls/sync';
 
-  static const String getNearbyStalls = '$_stalls/nearby';
+  static String getNearbyStalls({
+    required double lat,
+    required double lng,
+    double radius = 500,
+  }) => '$_stalls/geofence?lat=$lat&lng=$lng&radius=$radius';
 }

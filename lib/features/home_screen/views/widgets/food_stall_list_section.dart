@@ -6,6 +6,7 @@ import 'package:automatic_demonstration/features/home_screen/data/models/food_st
 import 'package:automatic_demonstration/features/home_screen/data/repository/routing_repository.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_notifier.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_service_provider.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/geofence_service.dart';
 import 'package:automatic_demonstration/features/home_screen/utils/duration_converter.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/category_container.dart';
@@ -33,6 +34,7 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   List<FoodStallModel> _foodStallModels = [];
   int _currentPage = 0;
   int _selectedCategoryIndex = 0;
+  bool _isModalShowing = false;
 
   @override
   void initState() {
@@ -62,6 +64,11 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   }
 
   void _onPlay(int index) {
+    if (_isModalShowing) {
+      Navigator.pop(context);
+      _isModalShowing = false;
+    }
+
     final url = _foodStallModels[index].audioUrl;
     final notifier = ref.read(audioProvider.notifier);
     final audioState = ref.read(audioProvider);
@@ -80,6 +87,7 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
       notifier.load(url);
     }
 
+    _isModalShowing = true;
     showModalBottomSheet(
       context: context,
       isDismissible: true,
@@ -88,16 +96,64 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
       builder: (BuildContext sheetContext) {
         return AudioPopupModal(
           foodStallModel: _foodStallModels[index],
+          onSkip: () {
+            setState(() {
+              _allowFoodStallIndexes[index] = false;
+            });
+
+            // Find next stall
+            int nextIndex = index + 1;
+            while (nextIndex < _foodStallModels.length && 
+                  (_foodStallModels[nextIndex].audioUrl.isEmpty || !_allowFoodStallIndexes[nextIndex])) {
+              nextIndex++;
+            }
+
+            if (nextIndex < _foodStallModels.length) {
+              // If found next stall, close current modal and trigger next
+              Navigator.pop(sheetContext);
+              
+              // Let bottom sheet finish closing animation before opening next
+              Future.delayed(const Duration(milliseconds: 300), () {
+                if (mounted) {
+                  _onPlay(nextIndex);
+                }
+              });
+            } else {
+              // If it's the last one
+              notifier.stop();
+              Navigator.pop(sheetContext);
+            }
+          },
         );
       },
-    );
+    ).then((_) {
+      _isModalShowing = false;
+    });
   }
 
   void _onSkip(int index) {
-    ref.read(audioProvider.notifier).stop();
     setState(() {
       _allowFoodStallIndexes[index] = false;
     });
+    
+    final notifier = ref.read(audioProvider.notifier);
+    
+    int nextIndex = index + 1;
+    while (nextIndex < _foodStallModels.length && 
+          (_foodStallModels[nextIndex].audioUrl.isEmpty || !_allowFoodStallIndexes[nextIndex])) {
+      nextIndex++;
+    }
+
+    if (nextIndex < _foodStallModels.length) {
+      // Play next automatically
+      _onPlay(nextIndex);
+    } else {
+      notifier.stop();
+      if (_isModalShowing) {
+        Navigator.pop(context);
+        _isModalShowing = false;
+      }
+    }
   }
 
   void _onRestore(int index) {
@@ -141,6 +197,23 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
       _allowFoodStallIndexes =
           List.generate(widget.foodStalls.length, (_) => true);
     }
+
+    ref.listen(geofenceServiceProvider, (previous, next) {
+      if (previous == null) return;
+
+      for (final stallId in next.keys) {
+        final prevState = previous[stallId];
+        final nextState = next[stallId];
+
+        if (prevState != GeofenceState.triggered &&
+            nextState == GeofenceState.triggered) {
+          final index = _foodStallModels.indexWhere((s) => s.id == stallId);
+          if (index != -1 && _allowFoodStallIndexes[index]) {
+            _onPlay(index);
+          }
+        }
+      }
+    });
 
     return _BuildUI(
       foodStallModels: _foodStallModels,
@@ -219,7 +292,7 @@ class _BuildUI extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: AppConstants.spacingXXXL.h),
+        // SizedBox(height: AppConstants.spacingXL.h),
         // _AppNavigation(),
       ],
     );
@@ -399,8 +472,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                // "${foodStallModel.distance!.toStringAsFixed(1)}m",
-                "${foodStallModel.distance ?? 0}m",
+                "${foodStallModel.distance?.toStringAsFixed(1) ?? 0}m",
                 style: TextStyle(
                   fontWeight: .w500,
                   fontSize: AppConstants.fontXS.sp,

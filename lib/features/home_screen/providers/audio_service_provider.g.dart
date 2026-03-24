@@ -156,3 +156,36 @@ final class AudioDurationProvider
 }
 
 String _$audioDurationHash() => r'4c31772a1955792cd63e5ce22b85229fff863922';
+
+@ProviderFor(audioSpeed)
+const audioSpeedProvider = AudioSpeedProvider._();
+
+final class AudioSpeedProvider
+    extends $FunctionalProvider<AsyncValue<double>, double, Stream<double>>
+    with $FutureModifier<double>, $StreamProvider<double> {
+  const AudioSpeedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'audioSpeedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$audioSpeedHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<double> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<double> create(Ref ref) {
+    return audioSpeed(ref);
+  }
+}
+
+String _$audioSpeedHash() => r'7c49c600e7e1e0bb5da7c2bc472f318f432af457';

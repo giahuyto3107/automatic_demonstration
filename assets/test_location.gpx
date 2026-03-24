@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Gemini" xmlns="http://www.topografix.com/GPX/1/1">
+    <wpt lat="10.760864" lon="106.703279">
+        <name>Điểm Test Quận 4</name>
+        <desc>Toạ độ dùng để test tính năng Geofencing</desc>
+    </wpt>
+</gpx>

@@ -312,23 +312,27 @@ class MapContainerState extends State<MapContainer> {
   }
 
   Future<void> _updateUserLocationMarker(LatLng location) async {
-    if (_mapController == null) return;
+    if (_mapController == null || !_isStyleLoaded) return;
 
-    // Remove existing circle if any
-    if (_userLocationCircle != null) {
-      await _mapController!.removeCircle(_userLocationCircle!);
+    try {
+      // Remove existing circle if any
+      if (_userLocationCircle != null) {
+        await _mapController!.removeCircle(_userLocationCircle!);
+      }
+
+      // Add new circle at user's location
+      _userLocationCircle = await _mapController!.addCircle(
+        CircleOptions(
+          geometry: location,
+          circleRadius: 10,
+          circleColor: const Color(0xffFF0000),
+          circleStrokeColor: const Color(0xffFFFFFF),
+          circleStrokeWidth: 3,
+        ),
+      );
+    } catch (e) {
+      debugPrint('[MapContainer] Error updating user location marker: $e');
     }
-
-    // Add new circle at user's location
-    _userLocationCircle = await _mapController!.addCircle(
-      CircleOptions(
-        geometry: location,
-        circleRadius: 10,
-        circleColor: Color(0xffFF0000),
-        circleStrokeColor: Color(0xffFFFFFF),
-        circleStrokeWidth: 3,
-      ),
-    );
   }
 
   Future<void> startLiveTracking() async {
@@ -491,6 +495,11 @@ class MapContainerState extends State<MapContainer> {
                 debugPrint('[MapContainer] triggering displayStalls from onStyleLoadedCallback (main small map)');
                 // Always trigger; displayStalls has its own null/style guards.
                 displayStalls(widget.stalls);
+                
+                // Add the user location marker if we already have it retrieved
+                if (_userLocation != null) {
+                  _updateUserLocationMarker(_userLocation!);
+                }
               },
 
               myLocationEnabled: true,

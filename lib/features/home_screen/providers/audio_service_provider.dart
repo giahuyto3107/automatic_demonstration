@@ -28,3 +28,9 @@ Stream<Duration?> audioDuration(Ref ref) {
   final service = ref.watch(audioServiceProvider);
   return service.durationStream;
 }
+
+@riverpod
+Stream<double> audioSpeed(Ref ref) {
+  final service = ref.watch(audioServiceProvider);
+  return service.speedStream;
+}
