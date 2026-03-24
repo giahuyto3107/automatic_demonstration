@@ -13,10 +13,12 @@ import 'package:just_audio/just_audio.dart';
 
 class AudioPopupModal extends ConsumerStatefulWidget {
   final FoodStallModel foodStallModel;
+  final VoidCallback? onSkip;
 
   const AudioPopupModal({
     super.key,
-    required this.foodStallModel
+    required this.foodStallModel,
+    this.onSkip,
   });
 
   @override
@@ -69,21 +71,10 @@ class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
                 foodStallModel: widget.foodStallModel,
               ),
               SizedBox(height: AppConstants.spacingXS.h,),
-              _PlayStopToggleButton(
+              _PlaybackControls(
                 isPlaying: isPlaying,
                 isLoading: isLoading,
-                onToggle: () {
-                  final notifier = ref.read(audioProvider.notifier);
-                  final playerState = ref.read(audioPlayerStateProvider).value;
-                  if (playerState?.processingState == ProcessingState.completed) {
-                    notifier.seek(Duration.zero);
-                    notifier.resume();
-                  } else if (isPlaying) {
-                    notifier.pause();
-                  } else {
-                    notifier.resume();
-                  }
-                },
+                onSkip: widget.onSkip,
               ),
               SizedBox(height: AppConstants.spacingL.h,),
               _TextContainer(
@@ -232,6 +223,119 @@ class _AudioTimeIndicator extends StatelessWidget {
           ),
         )
       ],
+    );
+  }
+}
+
+class _PlaybackControls extends ConsumerWidget {
+  final bool isPlaying;
+  final bool isLoading;
+  final VoidCallback? onSkip;
+
+  const _PlaybackControls({
+    required this.isPlaying,
+    required this.isLoading,
+    this.onSkip,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _SpeedButton(),
+        _SeekButton(
+          icon: Icons.replay_10,
+          onTap: () {
+            final position = ref.read(audioPositionProvider).value ?? Duration.zero;
+            final target = position - const Duration(seconds: 10);
+            ref.read(audioProvider.notifier).seek(target.isNegative ? Duration.zero : target);
+          },
+        ),
+        _PlayStopToggleButton(
+          isPlaying: isPlaying,
+          isLoading: isLoading,
+          onToggle: () {
+            final notifier = ref.read(audioProvider.notifier);
+            final playerState = ref.read(audioPlayerStateProvider).value;
+            if (playerState?.processingState == ProcessingState.completed) {
+              notifier.seek(Duration.zero);
+              notifier.resume();
+            } else if (isPlaying) {
+              notifier.pause();
+            } else {
+              notifier.resume();
+            }
+          },
+        ),
+        _SeekButton(
+          icon: Icons.forward_10,
+          onTap: () {
+            final position = ref.read(audioPositionProvider).value ?? Duration.zero;
+            final duration = ref.read(audioDurationProvider).value ?? Duration.zero;
+            final target = position + const Duration(seconds: 10);
+            ref.read(audioProvider.notifier).seek(target > duration ? duration : target);
+          },
+        ),
+        IconButton(
+          onPressed: onSkip,
+          icon: Icon(
+            FontAwesomeIcons.forwardStep, // using forward-step as skip icon
+            size: AppConstants.fontL.r,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SpeedButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final speed = ref.watch(audioSpeedProvider).value ?? 1.0;
+    
+    return TextButton(
+      onPressed: () {
+        final notifier = ref.read(audioProvider.notifier);
+        if (speed == 1.0) {
+          notifier.setSpeed(1.5);
+        } else if (speed == 1.5) {
+          notifier.setSpeed(2.0);
+        } else {
+          notifier.setSpeed(1.0);
+        }
+      },
+      child: Text(
+        '${speed}x',
+        style: TextStyle(
+          fontSize: AppConstants.fontM.sp,
+          fontWeight: FontWeight.w700,
+          color: Theme.of(context).textTheme.bodyMedium?.color,
+        ),
+      ),
+    );
+  }
+}
+
+class _SeekButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _SeekButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(
+        icon,
+        size: AppConstants.fontXL.r,
+        color: Theme.of(context).textTheme.bodyMedium?.color,
+      ),
     );
   }
 }

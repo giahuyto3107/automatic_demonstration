@@ -12,6 +12,7 @@ class AudioService {
   Stream<Duration> get positionStream => _player.positionStream;
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   Stream<Duration?> get durationStream => _player.durationStream;
+  Stream<double> get speedStream => _player.speedStream;
 
   Future<void> initAudio(String url) async {
     _player.play(); // Pre-emptive play call
@@ -24,6 +25,7 @@ class AudioService {
   void pause() => _player.pause();
   void resume() => _player.play();
   void seek(Duration position) => _player.seek(position);
+  void setSpeed(double speed) => _player.setSpeed(speed);
   void stop() => _player.stop();
   void dispose() => _player.dispose();
 }

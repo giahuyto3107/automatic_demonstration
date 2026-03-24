@@ -32,4 +32,5 @@ class AudioNotifier extends _$AudioNotifier {
   void resume() => ref.read(audioServiceProvider).resume();
   void stop() => ref.read(audioServiceProvider).stop();
   void seek(Duration position) => ref.read(audioServiceProvider).seek(position);
+  void setSpeed(double speed) => ref.read(audioServiceProvider).setSpeed(speed);
 }
