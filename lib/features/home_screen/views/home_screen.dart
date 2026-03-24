@@ -4,6 +4,7 @@ import 'package:automatic_demonstration/core/providers/app_theme.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/gps_enum.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/geofence_service.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
@@ -16,7 +17,7 @@ class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build (BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final backgroundGradients = context.backgroundGradients;
     final foodStallAsync = ref.watch(foodStallProvider);
 
@@ -24,16 +25,15 @@ class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            gradient: backgroundGradients.topContainerGradient
+            gradient: backgroundGradients.topContainerGradient,
           ),
           child: Column(
             children: [
               const _HeadingRow(),
               Expanded(
                 child: foodStallAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, stackTrace) => Center(
                     child: Text(
                       'Lỗi tải dữ liệu: $error',
@@ -44,7 +44,16 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   data: (foodStalls) {
-                    debugPrint('[HomeScreen] foodStallProvider data received | count: ${foodStalls.length}');
+                    debugPrint(
+                      '[HomeScreen] foodStallProvider data received | count: ${foodStalls.length}',
+                    );
+                    // Initialize or update geofence watching
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      ref
+                          .read(geofenceServiceProvider.notifier)
+                          .initialize(foodStalls);
+                    });
+
                     return Column(
                       children: [
                         Expanded(
@@ -52,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
                           child: MapContainer(
                             key: MapContainer.globalKey,
                             stalls: foodStalls,
-                          )
+                          ),
                         ),
                         Expanded(
                           flex: 7,
@@ -62,11 +71,11 @@ class HomeScreen extends ConsumerWidget {
                             ),
                             child: Column(
                               children: [
-                                SizedBox(height: AppConstants.spacingM.h,),
+                                SizedBox(height: AppConstants.spacingM.h),
                                 Expanded(
                                   child: FoodStallListSection(
                                     foodStalls: foodStalls,
-                                  )
+                                  ),
                                 ),
                               ],
                             ),
@@ -75,8 +84,8 @@ class HomeScreen extends ConsumerWidget {
                       ],
                     );
                   },
-                )
-              )
+                ),
+              ),
             ],
           ),
         ),
@@ -89,7 +98,7 @@ class _HeadingRow extends StatelessWidget {
   const _HeadingRow();
 
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     final bgColors = context.surfaceColors;
 
     return Container(
@@ -106,20 +115,15 @@ class _HeadingRow extends StatelessWidget {
               flex: 3,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _DarkModeTogglerButton())
-              ,
+                child: _DarkModeTogglerButton(),
+              ),
             ),
-            Expanded(
-              flex: 4,
-              child: _LogoAndAppName()
-            ),
+            Expanded(flex: 4, child: _LogoAndAppName()),
             Expanded(
               flex: 3,
               child: Align(
                 alignment: .centerRight,
-                child: _GPSSection(
-                  status: EGpsStatus.enable,
-                ),
+                child: _GPSSection(status: EGpsStatus.enable),
               ),
             ),
           ],
@@ -133,7 +137,7 @@ class _LogoAndAppName extends StatelessWidget {
   const _LogoAndAppName();
 
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: .center,
       children: [
@@ -155,26 +159,25 @@ class _LogoAndAppName extends StatelessWidget {
         // ),
 
         // SizedBox(width: AppConstants.spacingM.w,),
-
         Column(
           children: [
             Text(
               AppStrings.appPrimaryTitle,
               style: TextStyle(
-                  fontSize: AppConstants.fontS.sp,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: .w700
+                fontSize: AppConstants.fontS.sp,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontWeight: .w700,
               ),
             ),
 
             Text(
               AppStrings.appSecondaryTitle,
               style: TextStyle(
-                  fontSize: AppConstants.fontXXS.sp,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: .w400
+                fontSize: AppConstants.fontXXS.sp,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontWeight: .w400,
               ),
-            )
+            ),
           ],
         ),
       ],
@@ -183,14 +186,12 @@ class _LogoAndAppName extends StatelessWidget {
 }
 
 class _GPSSection extends StatelessWidget {
-    final EGpsStatus status;
+  final EGpsStatus status;
 
-  const _GPSSection({
-    required this.status
-  });
+  const _GPSSection({required this.status});
 
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     String gpsStatus = status == EGpsStatus.enable
         ? "Bật"
         : status == EGpsStatus.disable
@@ -201,10 +202,7 @@ class _GPSSection extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppColors.enabledGpsBackground,
         borderRadius: .circular(AppConstants.radiusCircular.r),
-        border: Border.all(
-          color: AppColors.enabledGpsBorder,
-          width: 1.0.w,
-        )
+        border: Border.all(color: AppColors.enabledGpsBorder, width: 1.0.w),
       ),
       padding: EdgeInsets.symmetric(
         horizontal: AppConstants.spacingM.w,
@@ -223,14 +221,14 @@ class _GPSSection extends StatelessWidget {
               weight: AppConstants.borderMedium,
             ),
           ),
-          SizedBox(width: AppConstants.spacingXS.w,),
+          SizedBox(width: AppConstants.spacingXS.w),
           Container(
             height: AppConstants.fontM.h,
             width: 1.0.w,
             color: AppColors.dividerColor,
           ),
-          SizedBox(width: AppConstants.spacingS.w,),
-          _RefreshButton()
+          SizedBox(width: AppConstants.spacingS.w),
+          _RefreshButton(),
         ],
       ),
     );
@@ -241,7 +239,7 @@ class _RefreshButton extends StatelessWidget {
   const _RefreshButton();
 
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         MapContainer.globalKey.currentState?.startLiveTracking();
@@ -260,7 +258,7 @@ class _DarkModeTogglerButton extends ConsumerWidget {
   const _DarkModeTogglerButton();
 
   @override
-  Widget build (BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(appThemeProvider);
     final bool isLightMode = themeMode == ThemeMode.light;
 
@@ -291,41 +289,40 @@ class _DarkModeTogglerButton extends ConsumerWidget {
             AnimatedPositioned(
               duration: Duration(milliseconds: 400),
               curve: Curves.easeIn,
-              top: 0,    // add this
+              top: 0, // add this
               bottom: 0,
               left: isLightMode ? containerWidth.w - toggleSize : 0.w,
               right: isLightMode ? 0.w : containerWidth.w - toggleSize.w,
               child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 400),
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    return RotationTransition(
-                      turns: animation,
-                      child: child,
-                    );
-                  },
+                duration: Duration(milliseconds: 400),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return RotationTransition(turns: animation, child: child);
+                },
 
-                  child: Container(
-                    height: 25.h,
-                    width: 25.h,
-                    decoration: BoxDecoration(
-                      color: isLightMode ? Colors.black : Colors.white,
-                      borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+                child: Container(
+                  height: 25.h,
+                  width: 25.h,
+                  decoration: BoxDecoration(
+                    color: isLightMode ? Colors.black : Colors.white,
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusCircular.r,
                     ),
-                    child: isLightMode
+                  ),
+                  child: isLightMode
                       ? Icon(
-                        Icons.light_mode,
-                        color: Colors.white,
-                        size: 15.r,
-                        key: ValueKey(isLightMode),
-                      )
+                          Icons.light_mode,
+                          color: Colors.white,
+                          size: 15.r,
+                          key: ValueKey(isLightMode),
+                        )
                       : Icon(
-                        Icons.dark_mode,
-                        color: Colors.black,
-                        size: 15.r,
-                        key: ValueKey(isLightMode),
-                      ),
-                  )
+                          Icons.dark_mode,
+                          color: Colors.black,
+                          size: 15.r,
+                          key: ValueKey(isLightMode),
+                        ),
                 ),
+              ),
             ),
 
             AnimatedPositioned(
@@ -341,8 +338,14 @@ class _DarkModeTogglerButton extends ConsumerWidget {
                   key: ValueKey(isLightMode),
                   child: Padding(
                     padding: EdgeInsets.only(
-                      left: isLightMode ? AppConstants.spacingS.w : 0,   // padding away from border when on left
-                      right: isLightMode ? 0 : AppConstants.spacingS.w,  // padding away from border when on right
+                      left: isLightMode
+                          ? AppConstants.spacingS.w
+                          : 0, // padding away from border when on left
+                      right: isLightMode
+                          ? 0
+                          : AppConstants
+                                .spacingS
+                                .w, // padding away from border when on right
                     ),
                     child: Text(
                       isLightMode ? 'Light' : 'Dark',
@@ -358,7 +361,7 @@ class _DarkModeTogglerButton extends ConsumerWidget {
             ),
           ],
         ),
-      )
+      ),
     );
   }
 }

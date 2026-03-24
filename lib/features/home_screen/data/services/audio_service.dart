@@ -15,10 +15,17 @@ class AudioService {
   Stream<double> get speedStream => _player.speedStream;
 
   Future<void> initAudio(String url) async {
-    _player.play(); // Pre-emptive play call
-    await _player.setAudioSource(
-      AudioSource.uri(Uri.parse(url)),
-    );
+    if (url.isEmpty) {
+      throw Exception('Audio URL is empty');
+    }
+    try {
+      await _player.setAudioSource(AudioSource.uri(Uri.parse(url)));
+      _player.play();
+    } catch (e) {
+      // Log or handle the 404 (and other errors) so it doesn't crash the app silently or cause playback loops
+      print("Error loading audio source for url $url: $e");
+      rethrow;
+    }
   }
 
   // Common Controls
