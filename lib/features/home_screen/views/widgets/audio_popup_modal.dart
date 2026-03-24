@@ -2,6 +2,7 @@ import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_notifier.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_service_provider.dart';
+import 'package:automatic_demonstration/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -133,7 +134,7 @@ class _ModalHeading extends ConsumerWidget {
                 ),
                 SizedBox(width: AppConstants.spacingS.w,),
                 Text(
-                  isPlaying ? AppStrings.audioIsPlaying : AppStrings.audioIsStopped,
+                  isPlaying ? AppLocalizations.of(context)!.audioIsPlaying : AppLocalizations.of(context)!.audioIsStopped,
                   style: TextStyle(
                     fontSize: AppConstants.fontXS.sp,
                     color: Theme.of(context).textTheme.bodyMedium?.color,

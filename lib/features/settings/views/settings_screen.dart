@@ -1,7 +1,8 @@
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
-import 'package:automatic_demonstration/core/constants/app_strings.dart';
 import 'package:automatic_demonstration/core/providers/app_theme.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
+import 'package:automatic_demonstration/features/settings/views/language_screen.dart';
+import 'package:automatic_demonstration/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -43,18 +44,19 @@ class _AppPreferences extends StatelessWidget {
   @override
   Widget build (BuildContext context) {
     final surfaceColors = context.surfaceColors;
+    final l10n = AppLocalizations.of(context)!;
 
     final options = [
-      {'icon': FontAwesomeIcons.circleHalfStroke, 'label': AppStrings.theme},
-      {'icon': Icons.notifications, 'label': AppStrings.notification},
-      {'icon': FontAwesomeIcons.language, 'label': AppStrings.language},
+      {'icon': FontAwesomeIcons.circleHalfStroke, 'label': l10n.theme},
+      {'icon': Icons.notifications, 'label': l10n.notification},
+      {'icon': FontAwesomeIcons.language, 'label': l10n.language},
     ];
 
     return Column(
       crossAxisAlignment: .start,
       children: [
         Text(
-          AppStrings.appPreferences,
+          l10n.appPreferences,
           style: TextStyle(
             fontSize: AppConstants.spacingL.sp,
             color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -80,10 +82,20 @@ class _AppPreferences extends StatelessWidget {
               color: Colors.grey.withAlpha(85),
             ),
             itemBuilder: (context, index) {
-              return _OptionRow(
-                icon: options[index]['icon'] as IconData,
-                label: options[index]['label'] as String,
-                actionIcon: index == 0 ? _ThemeButton() : null,
+              return InkWell(
+                onTap: () {
+                  if (options[index]['label'] == l10n.language) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LanguageScreen()),
+                    );
+                  }
+                },
+                child: _OptionRow(
+                  icon: options[index]['icon'] as IconData,
+                  label: options[index]['label'] as String,
+                  actionIcon: index == 0 ? const _ThemeButton() : null,
+                ),
               );
             },
           ),

@@ -12,6 +12,7 @@ import 'package:automatic_demonstration/features/home_screen/views/widgets/audio
 import 'package:automatic_demonstration/features/home_screen/views/widgets/category_container.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/inherited_widgets.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
+import 'package:automatic_demonstration/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -100,29 +101,8 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
             setState(() {
               _allowFoodStallIndexes[index] = false;
             });
-
-            // Find next stall
-            int nextIndex = index + 1;
-            while (nextIndex < _foodStallModels.length && 
-                  (_foodStallModels[nextIndex].audioUrl.isEmpty || !_allowFoodStallIndexes[nextIndex])) {
-              nextIndex++;
-            }
-
-            if (nextIndex < _foodStallModels.length) {
-              // If found next stall, close current modal and trigger next
-              Navigator.pop(sheetContext);
-              
-              // Let bottom sheet finish closing animation before opening next
-              Future.delayed(const Duration(milliseconds: 300), () {
-                if (mounted) {
-                  _onPlay(nextIndex);
-                }
-              });
-            } else {
-              // If it's the last one
-              notifier.stop();
-              Navigator.pop(sheetContext);
-            }
+            notifier.stop();
+            Navigator.pop(sheetContext);
           },
         );
       },
@@ -137,22 +117,11 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
     });
     
     final notifier = ref.read(audioProvider.notifier);
+    notifier.stop();
     
-    int nextIndex = index + 1;
-    while (nextIndex < _foodStallModels.length && 
-          (_foodStallModels[nextIndex].audioUrl.isEmpty || !_allowFoodStallIndexes[nextIndex])) {
-      nextIndex++;
-    }
-
-    if (nextIndex < _foodStallModels.length) {
-      // Play next automatically
-      _onPlay(nextIndex);
-    } else {
-      notifier.stop();
-      if (_isModalShowing) {
-        Navigator.pop(context);
-        _isModalShowing = false;
-      }
+    if (_isModalShowing) {
+      Navigator.pop(context);
+      _isModalShowing = false;
     }
   }
 
@@ -209,7 +178,14 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
             nextState == GeofenceState.triggered) {
           final index = _foodStallModels.indexWhere((s) => s.id == stallId);
           if (index != -1 && _allowFoodStallIndexes[index]) {
-            _onPlay(index);
+            // Check if audio is currently playing to prevent interrupting
+            final playerState = ref.read(audioPlayerStateProvider).value;
+            final isPlaying = (playerState?.playing ?? false) && 
+                              playerState?.processingState != ProcessingState.completed;
+            
+            if (!isPlaying) {
+              _onPlay(index);
+            }
           }
         }
       }
@@ -314,7 +290,7 @@ class _FoodStallListTitle extends StatelessWidget {
       mainAxisAlignment: .spaceBetween,
       children: [
         Text(
-          AppStrings.foodStallSectionTitle,
+          AppLocalizations.of(context)!.foodStallSectionTitle,
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
               color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -355,7 +331,7 @@ class _FoodStallList extends StatelessWidget {
     if (visibleIndices.isEmpty) {
       return Center(
         child: Text(
-          'Không có quán nào',
+          AppLocalizations.of(context)!.emptyStallList,
           style: TextStyle(
             fontSize: AppConstants.fontL.sp,
             color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -723,8 +699,9 @@ class _ActionButtonsRow extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
+        final errorMsg = AppLocalizations.of(context)!.routingError;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không thể tải chỉ đường: $e')),
+          SnackBar(content: Text('$errorMsg: $e')),
         );
       }
     }
@@ -733,6 +710,7 @@ class _ActionButtonsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final surfaceColors = context.surfaceColors;
+    final selectionColors = context.selectionColors;
 
     final provider = FoodStallItemProvider.of(context);
     if (provider == null) return const SizedBox();
@@ -742,7 +720,8 @@ class _ActionButtonsRow extends ConsumerWidget {
 
     final currentAudioUrl = audioAsync.value;
     final isPlaying = playerStateAsync.value?.playing ?? false;
-    final isCurrentStallPlaying = isPlaying && currentAudioUrl == foodStallModel.audioUrl;
+    final isCompleted = playerStateAsync.value?.processingState == ProcessingState.completed;
+    final isCurrentStallPlaying = isPlaying && !isCompleted && currentAudioUrl == foodStallModel.audioUrl;
 
     return Container(
       decoration: BoxDecoration(
@@ -766,8 +745,8 @@ class _ActionButtonsRow extends ConsumerWidget {
                       ? FontAwesomeIcons.pause
                       : FontAwesomeIcons.play,
                   name: isCurrentStallPlaying
-                      ? AppStrings.audioIsStoppedButton
-                      : AppStrings.playAudio,
+                      ? AppLocalizations.of(context)!.audioIsStoppedButton
+                      : AppLocalizations.of(context)!.playAudio,
                   bgColor: isCurrentStallPlaying
                       ? AppColors.enable
                       : AppColors.playButtonColor,
@@ -781,7 +760,7 @@ class _ActionButtonsRow extends ConsumerWidget {
                 latitude: foodStallModel.latitude,
                 longitude: foodStallModel.longitude,
                 icon: FontAwesomeIcons.route,
-                name: 'Chỉ đường',
+                name: AppLocalizations.of(context)!.routing,
                 bgColor: Color(0xff4A90D9),
                 onClick: () => _showRouteOnMap(context),
               )),
@@ -797,11 +776,11 @@ class _ActionButtonsRow extends ConsumerWidget {
                       ? FontAwesomeIcons.rotateLeft
                       : FontAwesomeIcons.forwardStep,
                   name: provider.isSkipped
-                      ? AppStrings.restoreAudio
-                      : AppStrings.skipAudio,
+                      ? AppLocalizations.of(context)!.restoreAudio
+                      : AppLocalizations.of(context)!.skipAudio,
                   bgColor: provider.isSkipped
                       ? AppColors.playButtonColor
-                      : surfaceColors.skipButtonSurface,
+                      : selectionColors.selectedText,
                   onClick: provider.onSkipOrRestoreTap))
         ],
       ),
@@ -828,6 +807,8 @@ class _ActionButtonContainer extends StatelessWidget {
 
   @override
   Widget build (BuildContext context) {
+    final surfaceColors = context.surfaceColors;
+
     final int height = 25;
 
     return GestureDetector(
@@ -846,7 +827,7 @@ class _ActionButtonContainer extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppColors.textOnDark,
+              color: surfaceColors.primarySurface,
               size: AppConstants.fontXS.r,
             ),
             SizedBox(width: AppConstants.spacingXS.w,),
@@ -854,7 +835,7 @@ class _ActionButtonContainer extends StatelessWidget {
               name,
               style: TextStyle(
                 fontSize: AppConstants.fontXS.sp,
-                color: AppColors.textOnDark,
+                color: surfaceColors.primarySurface,
                 fontWeight: FontWeight.w500,
               ),
             )

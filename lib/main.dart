@@ -6,6 +6,7 @@ import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/core/theme/background_gradients_extension.dart';
 import 'package:automatic_demonstration/core/theme/selection_colors_extension.dart';
 import 'package:automatic_demonstration/core/theme/surface_colors_extension.dart';
+import 'package:automatic_demonstration/l10n/app_localizations.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +18,15 @@ Future<void> main() async {
 
   await EnvService.init();
 
+  // We manually manage the container to pre-load the locale
+  final container = ProviderContainer();
+
+  // Initialize the locale from SharedPreferences
+  await container.read(appLocaleProvider.notifier).init();
+
   runApp(
-    ProviderScope(
+    UncontrolledProviderScope(
+      container: container,
       child: DevicePreview(
         enabled: !kReleaseMode,
         builder: (context) => const MainApp()
@@ -82,6 +90,14 @@ class MainApp extends ConsumerWidget {
           debugShowCheckedModeBanner: false,
           routerConfig: appRouter,
           locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: const [
+            Locale('vi'), // Vietnamese
+            Locale('en'), // English
+            Locale('zh'), // Chinese
+            Locale('ja'), // Japanese
+            Locale('ko'), // Korean
+          ],
           themeMode: themeMode,
           theme: ThemeData(
             // This sets the background color for every Scaffold in your app

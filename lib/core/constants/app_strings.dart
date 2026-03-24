@@ -10,6 +10,7 @@ class AppStrings {
 
   static const String playAudio = "Phát";
   static const String skipAudio = "Bỏ qua";
+  static const String routing = "Chỉ đường";
   static const String restoreAudio = "Hoàn tác";
   static const String audioIsPlaying = "Đang phát thuyết minh";
   static const String audioIsStopped = "Đã tạm dừng";
@@ -25,6 +26,10 @@ class AppStrings {
   static const String listened = "Đã nghe";
   static const String filter = "Lọc";
 
+  static const String radius = "Radius";
+
+  static const String minute = "phút";
+
   static const String min = "Tối thiểu";
   static const String max = "Tối đa";
   static const String confirm = "Xác nhận";
@@ -36,4 +41,10 @@ class AppStrings {
   static const String notification = 'Thông báo';
   static const String language = 'Ngôn ngữ';
   static const String theme = 'Giao diện';
+
+  static const String vietnamese = 'Tiếng Việt';
+  static const String chinese = 'Tiếng Trung';
+  static const String english = 'Tiếng Anh';
+  static const String japanese = 'Tiếng Nhật';
+  static const String korean = 'Tiếng Hàn';
 }
