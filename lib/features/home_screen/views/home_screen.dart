@@ -1,5 +1,4 @@
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
-import 'package:automatic_demonstration/core/constants/app_strings.dart';
 import 'package:automatic_demonstration/core/providers/app_theme.dart';
 import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
@@ -8,10 +7,12 @@ import 'package:automatic_demonstration/features/home_screen/providers/geofence_
 import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
+import 'package:automatic_demonstration/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -162,7 +163,7 @@ class _LogoAndAppName extends StatelessWidget {
         Column(
           children: [
             Text(
-              AppStrings.appPrimaryTitle,
+              AppLocalizations.of(context)!.appPrimaryTitle,
               style: TextStyle(
                 fontSize: AppConstants.fontS.sp,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -171,7 +172,7 @@ class _LogoAndAppName extends StatelessWidget {
             ),
 
             Text(
-              AppStrings.appSecondaryTitle,
+              AppLocalizations.of(context)!.appSecondaryTitle,
               style: TextStyle(
                 fontSize: AppConstants.fontXXS.sp,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -241,7 +242,20 @@ class _RefreshButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          await Geolocator.openLocationSettings();
+        }
+
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.deniedForever) {
+            await Geolocator.openAppSettings();
+          }
+        }
+        
         MapContainer.globalKey.currentState?.startLiveTracking();
       },
       child: Icon(

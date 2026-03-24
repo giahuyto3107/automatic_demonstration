@@ -1,5 +1,6 @@
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
+import 'package:automatic_demonstration/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -105,8 +106,9 @@ class _AudioCategoryContainerState extends ConsumerState<AudioCategoryContainer>
   @override
   Widget build(BuildContext context) {
     final selectionColors = context.selectionColors;
+    final l10n = AppLocalizations.of(context)!;
 
-    List<String> audioCategoryItems = ['Tất cả', 'Đã nghe', 'Lọc'];
+    List<String> audioCategoryItems = [l10n.all, l10n.listened, l10n.filter];
     int lastCategoryItemIndex = audioCategoryItems.length - 1;
 
     return CompositedTransformTarget(
@@ -256,7 +258,7 @@ class _RadiusFilterDropdownState extends State<RadiusFilterDropdown> {
             SizedBox(
               width: double.infinity,
               child: Text(
-                "Bán kính (m)",
+                "${AppLocalizations.of(context)!.radius} (m)",
                 style: TextStyle(
                   fontSize: AppConstants.fontL.sp,
                   fontWeight: FontWeight.w600,
@@ -368,7 +370,7 @@ class _ConfirmButton extends StatelessWidget {
         ),
         padding: EdgeInsets.symmetric(vertical: AppConstants.spacingS.h),
         child: Text(
-          AppStrings.confirmButton,
+          AppLocalizations.of(context)!.confirmButton,
           style: TextStyle(
             fontSize: AppConstants.fontM.sp,
             fontWeight: .w600,

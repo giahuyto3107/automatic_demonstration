@@ -226,14 +226,20 @@ class _NavBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: Icon(
-        icon,
-        size: AppConstants.fontXL.sp,
-        color: isSelected ? AppColors.textOnLight : AppColors.disable,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          color: Colors.transparent,
+          alignment: Alignment.center,
+          child: Icon(
+            icon,
+            size: AppConstants.fontXL.sp,
+            color: isSelected ? AppColors.textOnLight : AppColors.disable,
+          ),
+        ),
       ),
     );
   }
-}
+} 

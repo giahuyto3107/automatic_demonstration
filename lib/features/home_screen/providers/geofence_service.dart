@@ -36,16 +36,26 @@ class GeofenceStatus {
 class GeofenceService extends _$GeofenceService {
   StreamSubscription<Position>? _positionSubscription;
   Timer? _countdownTimer;
-  Map<int, GeofenceStatus> _stallStatuses = {};
+  Timer? _cooldownCheckTimer;
+  final Map<int, GeofenceStatus> _stallStatuses = {};
+  List<FoodStallModel> _currentStalls = [];
+  Position? _lastPosition;
 
   static const int _triggerCountdownSeconds = 3;
-  static const int _cooldownMinutes = 3;
+  static const int _cooldownMinutes = 1;
 
   @override
   Map<int, GeofenceState> build() {
     ref.onDispose(() {
       _positionSubscription?.cancel();
       _countdownTimer?.cancel();
+      _cooldownCheckTimer?.cancel();
+    });
+
+    _cooldownCheckTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (_lastPosition != null && _currentStalls.isNotEmpty) {
+        _checkGeofences(_lastPosition!, _currentStalls);
+      }
     });
 
     // Default to empty map
@@ -54,10 +64,12 @@ class GeofenceService extends _$GeofenceService {
 
   void initialize(List<FoodStallModel> stalls) {
     if (_stallStatuses.isNotEmpty) return; // Prevent re-initialization reset
+    _currentStalls = stalls;
     _listenToLocation(stalls);
   }
 
   void updateStalls(List<FoodStallModel> stalls) {
+    _currentStalls = stalls;
     _listenToLocation(stalls);
   }
 
@@ -70,6 +82,7 @@ class GeofenceService extends _$GeofenceService {
             distanceFilter: 2, // Check every 2 meters
           ),
         ).listen((position) {
+          _lastPosition = position;
           _checkGeofences(position, stalls);
         });
   }
@@ -111,8 +124,9 @@ class GeofenceService extends _$GeofenceService {
     });
 
     FoodStallModel? activeStall;
-    for (final stall in insideStalls) {
-      final status = _stallStatuses[stall.id] ?? GeofenceStatus();
+    if (insideStalls.isNotEmpty) {
+      final closestStall = insideStalls.first;
+      final status = _stallStatuses[closestStall.id] ?? GeofenceStatus();
       bool inCooldown = false;
       if (status.state == GeofenceState.cooldown) {
         if (status.lastTriggeredTime != null &&
@@ -122,8 +136,7 @@ class GeofenceService extends _$GeofenceService {
         }
       }
       if (!inCooldown) {
-        activeStall = stall;
-        break;
+        activeStall = closestStall;
       }
     }
 
@@ -136,8 +149,9 @@ class GeofenceService extends _$GeofenceService {
             now.difference(status.lastTriggeredTime!).inMinutes >=
                 _cooldownMinutes) {
           status = status.copyWith(state: GeofenceState.outside);
-        } else {
+          // Make sure it saves the state regardless of whether inside or outside
           _stallStatuses[stall.id] = status;
+        } else {
           continue; // Still in cooldown
         }
       }
