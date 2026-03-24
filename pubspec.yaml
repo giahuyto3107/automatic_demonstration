@@ -46,6 +46,7 @@ dependencies:
   image_picker: ^1.2.1
   geolocator: ^14.0.2
   vietmap_flutter_gl: ^4.1.0
+  url_launcher: ^6.3.2
   just_audio: ^0.10.5
 
   # The following adds the Cupertino Icons font to your application.
