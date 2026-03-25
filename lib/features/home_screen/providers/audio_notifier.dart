@@ -1,3 +1,4 @@
+import 'package:automatic_demonstration/core/providers/app_locale.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -15,8 +16,12 @@ class AudioNotifier extends _$AudioNotifier {
 
     state = const AsyncLoading();
     final service = ref.read(audioServiceProvider);
+    
+    // Lấy ngôn ngữ hiện tại của user để load đúng file audio
+    final locale = ref.read(appLocaleProvider).languageCode;
+    
     try {
-      await service.initAudio(url);
+      await service.initAudio(url, localeCode: locale);
       if (!state.isLoading) return;
       state = AsyncData(url);
     } catch (e, st) {
@@ -24,6 +29,9 @@ class AudioNotifier extends _$AudioNotifier {
         // Ignore interruption as it means another load started
         return;
       }
+      print("AudioNotifier Error: $e");
+      // Mặc dù lỗi, nếu app cần cho qua để UI không kẹt, có thể gán AsyncData(null)
+      // nhưng tốt nhất là throw Error để UI handle
       state = AsyncError(e, st);
     }
   }

@@ -268,7 +268,7 @@ class _BuildUI extends StatelessWidget {
           ),
         ),
 
-        // SizedBox(height: AppConstants.spacingXL.h),
+        SizedBox(height: AppConstants.spacingXXXL.h),
         // _AppNavigation(),
       ],
     );
@@ -363,7 +363,7 @@ class _FoodStallList extends StatelessWidget {
   }
 }
 
-class _FoodStallContainer extends StatelessWidget {
+class _FoodStallContainer extends StatefulWidget {
   final FoodStallModel foodStallModel;
 
   const _FoodStallContainer({
@@ -371,7 +371,81 @@ class _FoodStallContainer extends StatelessWidget {
   });
 
   @override
+  State<_FoodStallContainer> createState() => _FoodStallContainerState();
+}
+
+class _FoodStallContainerState extends State<_FoodStallContainer> {
+  String? _routeDistance;
+  String? _routeTime;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRouteInfo();
+  }
+
+  @override
+  void didUpdateWidget(_FoodStallContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.foodStallModel.id != oldWidget.foodStallModel.id) {
+      _isLoading = true;
+      _routeDistance = null;
+      _routeTime = null;
+      _fetchRouteInfo();
+    }
+  }
+
+  Future<void> _fetchRouteInfo() async {
+    final stallLat = widget.foodStallModel.latitude;
+    final stallLng = widget.foodStallModel.longitude;
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      debugPrint('[RouteInfo] User: ${position.latitude}, ${position.longitude} -> Stall: $stallLat, $stallLng');
+
+      final repository = RoutingRepository(VietMapRoutingService.instance);
+      final route = await repository.getRouteToStall(
+        userLat: position.latitude,
+        userLng: position.longitude,
+        stallLat: stallLat,
+        stallLng: stallLng,
+      );
+
+      if (mounted && route != null) {
+        debugPrint('[RouteInfo] Success: ${route.formattedDistance}, ${route.formattedTime}');
+        setState(() {
+          _routeDistance = route.formattedDistance;
+          _routeTime = route.formattedTime;
+          _isLoading = false;
+        });
+      } else {
+        debugPrint('[RouteInfo] Route is null');
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint('[RouteInfo] Error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build (BuildContext context) {
+    final double fallbackDistance = widget.foodStallModel.distance ?? 0;
+    final formattedFallback = fallbackDistance == 0
+        ? "0 m"
+        : (fallbackDistance >= 1000
+        ? '${(fallbackDistance / 1000).toStringAsFixed(1)} km'
+        : '${fallbackDistance.toStringAsFixed(1)} m');
+    final distanceText = _routeDistance ?? formattedFallback;
+
+    final duration = Duration(seconds: widget.foodStallModel.audioDuration);
+    final timeText = _routeTime ?? formatDuration(duration);
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -387,22 +461,22 @@ class _FoodStallContainer extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _FoodStallUpperContainer(
-                    foodStallModel: foodStallModel,
+                    foodStallModel: widget.foodStallModel,
+                    distanceText: distanceText,
                   ),
                   _FoodStallLowerContainer(
-                    distance: foodStallModel.distance ?? 0,
-                    audioDuration: foodStallModel.audioDuration,
-                    description: foodStallModel.description,
-                    name: foodStallModel.name,
-                    latitude: foodStallModel.latitude,
-                    longitude: foodStallModel.longitude,
+                    name: widget.foodStallModel.name,
+                    description: widget.foodStallModel.description,
+                    distanceText: distanceText,
+                    timeText: timeText,
+                    isLoading: _isLoading,
                   ),
                 ],
               ),
             ),
           ),
           _ActionButtonsRow(
-            foodStallModel: foodStallModel,
+            foodStallModel: widget.foodStallModel,
           ),
         ],
       ),
@@ -412,9 +486,11 @@ class _FoodStallContainer extends StatelessWidget {
 
 class _FoodStallUpperContainer extends StatelessWidget {
   final FoodStallModel foodStallModel;
+  final String distanceText;
 
   const _FoodStallUpperContainer({
-    required this.foodStallModel
+    required this.foodStallModel,
+    required this.distanceText,
   });
 
   @override
@@ -448,12 +524,13 @@ class _FoodStallUpperContainer extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                "${foodStallModel.distance?.toStringAsFixed(1) ?? 0}m",
+                distanceText,
                 style: TextStyle(
-                  fontWeight: .w500,
-                  fontSize: AppConstants.fontXS.sp,
-                  color: AppColors.textOnLight
+                  fontSize: AppConstants.fontS.sp,
+                  color: AppColors.textOnLight,
+                  fontWeight: FontWeight.w300,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           )
@@ -466,18 +543,16 @@ class _FoodStallUpperContainer extends StatelessWidget {
 class _FoodStallLowerContainer extends StatelessWidget {
   final String name;
   final String description;
-  final double distance;
-  final int audioDuration;
-  final double? latitude;
-  final double? longitude;
+  final String distanceText;
+  final String timeText;
+  final bool isLoading;
 
   const _FoodStallLowerContainer({
     required this.name,
     required this.description,
-    required this.distance,
-    required this.audioDuration,
-    this.latitude,
-    this.longitude,
+    required this.distanceText,
+    required this.timeText,
+    required this.isLoading,
   });
 
   @override
@@ -519,10 +594,9 @@ class _FoodStallLowerContainer extends StatelessWidget {
               SizedBox(height: AppConstants.spacingS.h,),
 
               _RouteInfoRow(
-                stallLat: latitude,
-                stallLng: longitude,
-                fallbackDistance: distance,
-                audioDuration: audioDuration,
+                distanceText: distanceText,
+                timeText: timeText,
+                isLoading: isLoading,
               ),
             ],
           ),
@@ -534,89 +608,26 @@ class _FoodStallLowerContainer extends StatelessWidget {
 /// Displays route-based distance and travel time from VietMap API.
 ///
 /// Falls back to straight-line distance when route data is unavailable.
-class _RouteInfoRow extends StatefulWidget {
-  final double? stallLat;
-  final double? stallLng;
-  final double fallbackDistance;
-  final int audioDuration;
+class _RouteInfoRow extends StatelessWidget {
+  final String distanceText;
+  final String timeText;
+  final bool isLoading;
 
   const _RouteInfoRow({
-    required this.stallLat,
-    required this.stallLng,
-    required this.fallbackDistance,
-    required this.audioDuration,
+    required this.distanceText,
+    required this.timeText,
+    required this.isLoading,
   });
 
   @override
-  State<_RouteInfoRow> createState() => _RouteInfoRowState();
-}
-
-class _RouteInfoRowState extends State<_RouteInfoRow> {
-  String? _routeDistance;
-  String? _routeTime;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchRouteInfo();
-  }
-
-  Future<void> _fetchRouteInfo() async {
-    if (widget.stallLat == null || widget.stallLng == null) {
-      debugPrint('[RouteInfo] Stall coordinates are null');
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
-
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
-      debugPrint('[RouteInfo] User: ${position.latitude}, ${position.longitude} -> Stall: ${widget.stallLat}, ${widget.stallLng}');
-
-      final repository = RoutingRepository(VietMapRoutingService.instance);
-      final route = await repository.getRouteToStall(
-        userLat: position.latitude,
-        userLng: position.longitude,
-        stallLat: widget.stallLat!,
-        stallLng: widget.stallLng!,
-      );
-
-      if (mounted && route != null) {
-        debugPrint('[RouteInfo] Success: ${route.formattedDistance}, ${route.formattedTime}');
-        setState(() {
-          _routeDistance = route.formattedDistance;
-          _routeTime = route.formattedTime;
-          _isLoading = false;
-        });
-      } else {
-        debugPrint('[RouteInfo] Route is null');
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('[RouteInfo] Error: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final distanceText = _routeDistance ?? '${widget.fallbackDistance.toStringAsFixed(1)}m';
-
-    final duration = Duration(seconds: widget.audioDuration);
-    final timeText = _routeTime ?? formatDuration(duration);
-
     return Row(
       children: [
         _buildInfoItem(
           icon: FontAwesomeIcons.route,
           text: distanceText,
           color: Color(0xffcaa01a),
-          isLoading: _isLoading,
+          isLoading: isLoading,
         ),
 
         SizedBox(width: AppConstants.spacingL.w),
@@ -626,7 +637,7 @@ class _RouteInfoRowState extends State<_RouteInfoRow> {
           icon: FontAwesomeIcons.clock,
           text: timeText,
           color: Theme.of(context).textTheme.bodyMedium?.color,
-          isLoading: _isLoading,
+          isLoading: isLoading,
         ),
       ],
     );

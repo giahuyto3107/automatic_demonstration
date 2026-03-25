@@ -78,8 +78,10 @@ class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
                 onSkip: widget.onSkip,
               ),
               SizedBox(height: AppConstants.spacingL.h,),
-              _TextContainer(
-                foodStallModel: widget.foodStallModel
+              Flexible(
+                child: _TextContainer(
+                  foodStallModel: widget.foodStallModel
+                ),
               )
             ],
           ),
@@ -119,7 +121,7 @@ class _ModalHeading extends ConsumerWidget {
             Text(
               foodStallModel.name,
               style: TextStyle(
-                fontSize: AppConstants.fontM.sp,
+                fontSize: AppConstants.fontS.sp,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w700
               ),
@@ -409,13 +411,16 @@ class _TextContainer extends StatelessWidget {
         horizontal: AppConstants.spacingL.w,
         vertical: AppConstants.spacingM.h,
       ),
-      child: Text(
-        foodStallModel.description,
-        style: TextStyle(
-          fontWeight: FontWeight.w400,
-          fontSize: AppConstants.fontS.sp,
-          color: Theme.of(context).textTheme.bodyMedium?.color,
-        )
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Text(
+          foodStallModel.description,
+          style: TextStyle(
+            fontWeight: FontWeight.w400,
+            fontSize: AppConstants.fontS.sp,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          )
+        ),
       ),
     );
   }

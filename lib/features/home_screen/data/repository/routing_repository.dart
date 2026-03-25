@@ -1,6 +1,9 @@
 import 'package:automatic_demonstration/core/services/vietmap_routing_service.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/vietmap_route_model.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
+import 'package:automatic_demonstration/core/utils/polyline_encoder.dart';
 
 /// Repository that wraps [VietMapRoutingService] for route calculation.
 class RoutingRepository {
@@ -38,14 +41,12 @@ class RoutingRepository {
       );
 
       // ZERO_RESULTS means no route found (e.g., too far, no road connection)
-      // Return null gracefully instead of throwing
-      if (response.code == 'ZERO_RESULTS') {
-        debugPrint('[RoutingRepo] No route found (ZERO_RESULTS)');
-        return null;
-      }
-
-      if (!response.isSuccess) {
-        throw Exception('VietMap API returned: ${response.code}');
+      // Return a straight-line fallback route instead of null
+      if (response.code == 'ZERO_RESULTS' || !response.isSuccess || response.bestRoute == null) {
+        if (response.code == 'ZERO_RESULTS') {
+          debugPrint('[RoutingRepo] No route found (ZERO_RESULTS) - generating fallback line');
+        }
+        return _generateFallbackRoute(userLat, userLng, stallLat, stallLng);
       }
 
       return response.bestRoute;
@@ -54,6 +55,21 @@ class RoutingRepository {
       final message = e.toString().replaceAll(RegExp(r'^Exception:\s*'), '');
       throw Exception(message);
     }
+  }
+
+  RoutePath _generateFallbackRoute(double originLat, double originLng, double destLat, double destLng) {
+    final distanceMeters = Geolocator.distanceBetween(originLat, originLng, destLat, destLng);
+    final timeMs = (distanceMeters / 11.111) * 60000; // rough estimation: 40km/h
+    final encoded = encodePolyline([
+      LatLng(originLat, originLng),
+      LatLng(destLat, destLng)
+    ]);
+    return RoutePath(
+      distance: distanceMeters,
+      weight: distanceMeters,
+      time: timeMs.toInt(),
+      points: encoded,
+    );
   }
 
   /// Check if coordinates are valid (not 0,0 and within reasonable bounds)

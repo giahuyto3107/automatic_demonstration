@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -186,16 +187,50 @@ class _LogoAndAppName extends StatelessWidget {
   }
 }
 
-class _GPSSection extends StatelessWidget {
+class _GPSSection extends StatefulWidget {
   final EGpsStatus status;
 
   const _GPSSection({required this.status});
 
   @override
+  State<_GPSSection> createState() => _GPSSectionState();
+}
+
+class _GPSSectionState extends State<_GPSSection> with WidgetsBindingObserver {
+  bool isLocationGranted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPermission();
+    }
+  }
+
+  Future<void> _checkPermission() async {
+    final status = await Permission.location.status;
+    setState(() {
+      isLocationGranted = status.isGranted;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    String gpsStatus = status == EGpsStatus.enable
+    String gpsStatus = widget.status == EGpsStatus.enable
         ? "Bật"
-        : status == EGpsStatus.disable
+        : widget.status == EGpsStatus.disable
         ? "Tắt"
         : "Đang kết nối";
 
@@ -217,7 +252,9 @@ class _GPSSection extends StatelessWidget {
             message: "GPS $gpsStatus",
             child: Icon(
               FontAwesomeIcons.locationDot,
-              color: Color(0xff209851),
+              color: isLocationGranted
+                  ? const Color(0xff209851) // Green for true
+                  : const Color(0xffd9534f),
               size: AppConstants.fontM.r,
               weight: AppConstants.borderMedium,
             ),
@@ -229,7 +266,7 @@ class _GPSSection extends StatelessWidget {
             color: AppColors.dividerColor,
           ),
           SizedBox(width: AppConstants.spacingS.w),
-          _RefreshButton(),
+          _RefreshButton(onRefresh: _checkPermission),
         ],
       ),
     );
@@ -237,7 +274,9 @@ class _GPSSection extends StatelessWidget {
 }
 
 class _RefreshButton extends StatelessWidget {
-  const _RefreshButton();
+  final VoidCallback onRefresh;
+
+  const _RefreshButton({required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -248,14 +287,15 @@ class _RefreshButton extends StatelessWidget {
           await Geolocator.openLocationSettings();
         }
 
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-          permission = await Geolocator.requestPermission();
-          if (permission == LocationPermission.deniedForever) {
-            await Geolocator.openAppSettings();
+        var status = await Permission.location.status;
+        if (status.isDenied) {
+          status = await Permission.location.request();
+          if (status.isPermanentlyDenied) {
+            await openAppSettings();
           }
         }
         
+        onRefresh();
         MapContainer.globalKey.currentState?.startLiveTracking();
       },
       child: Icon(
