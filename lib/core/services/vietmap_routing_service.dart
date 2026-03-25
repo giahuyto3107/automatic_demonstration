@@ -5,6 +5,7 @@ import 'package:automatic_demonstration/core/config/env_config.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/vietmap_route_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// Standalone Dio-based service for VietMap external APIs.
 ///
@@ -125,7 +126,13 @@ class VietMapRoutingService {
       }
 
       throw Exception('Invalid response format from VietMap API');
-    } on DioException {
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout || 
+          e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        return _getOfflineFallbackRoute(originLat, originLng, destLat, destLng);
+      }
       rethrow;
     }
   }
@@ -221,15 +228,31 @@ class VietMapRoutingService {
       throw Exception('Invalid response format from VietMap API');
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        throw Exception('Kết nối tới VietMap bị timeout');
-      }
-      if (e.type == DioExceptionType.connectionError) {
-        throw Exception('Không thể kết nối tới VietMap');
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        debugPrint('[VietMapRouting] Offline! Falling back to offline Haversine distance.');
+        return _getOfflineFallbackRoute(originLat, originLng, destLat, destLng);
       }
       throw Exception(
           'VietMap routing failed: ${e.message ?? e.type.toString()}');
     }
+  }
+
+  VietMapRouteResponse _getOfflineFallbackRoute(double originLat, double originLng, double destLat, double destLng) {
+    final distanceMeters = Geolocator.distanceBetween(originLat, originLng, destLat, destLng);
+    final timeMs = (distanceMeters / 11.111) * 60000; // rough estimation: 40km/h = ~11.1m/s
+    return VietMapRouteResponse(
+      code: 'OK',
+      paths: [
+        RoutePath(
+          distance: distanceMeters,
+          weight: distanceMeters,
+          time: timeMs.toInt(),
+          points: '', // no polyline drawn when offline
+        )
+      ],
+    );
   }
 }
 

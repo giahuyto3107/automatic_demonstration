@@ -4,9 +4,12 @@ import 'package:automatic_demonstration/core/config/config.dart';
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/utils/polyline_decoder.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 
 class MapContainer extends StatefulWidget {
@@ -28,14 +31,50 @@ class MapContainerState extends State<MapContainer> {
   bool _hasRoute = false;
   bool _isStyleLoaded = false;
   bool _hasAutoFocusedStalls = false;
+  String? _mapStyleString;
 
-  final List<Circle> _stallCircles = [];
+  final List<Symbol> _stallSymbols = [];
 
   LatLng? get userLocation => _userLocation;
   @override
   void initState() {
     super.initState();
     debugPrint('[MapContainer] initState | initial stalls: ${widget.stalls.length}');
+    _determineMapStyle();
+  }
+
+  Future<void> _determineMapStyle() async {
+    try {
+      final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
+      final isOffline = connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty;
+
+      String styleString;
+      if (isOffline) {
+        debugPrint('[MapContainer] Offline mode detected, using local style.');
+        styleString = await rootBundle.loadString('assets/vietmap_styles/styles.json');
+      } else {
+        debugPrint('[MapContainer] Online mode detected, using remote style.');
+        final apiKey = EnvConfig.apiKey;
+        styleString = 'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$apiKey';
+      }
+
+      if (mounted) {
+        setState(() {
+          _mapStyleString = styleString;
+        });
+      }
+    } catch (e) {
+      debugPrint('[MapContainer] Failed to load style: $e');
+      // Fallback to local on error
+      try {
+        final fallbackStyle = await rootBundle.loadString('assets/vietmap_styles/styles.json');
+        if (mounted) {
+          setState(() {
+            _mapStyleString = fallbackStyle;
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   @override
@@ -59,7 +98,7 @@ class MapContainerState extends State<MapContainer> {
   void _showMapPopup(String apiKey) {
     VietmapController? popupController;
     bool isPopupStyleLoaded = false;
-    final List<Circle> popupStallCircles = [];
+    final List<Symbol> popupStallSymbols = [];
 
     Future<void> displayPopupStalls() async {
       if (popupController == null || !isPopupStyleLoaded) {
@@ -67,31 +106,36 @@ class MapContainerState extends State<MapContainer> {
         return;
       }
 
-      for (final circle in popupStallCircles) {
-        await popupController!.removeCircle(circle);
+      for (final symbol in popupStallSymbols) {
+        await popupController!.removeSymbol(symbol);
       }
-      popupStallCircles.clear();
+      popupStallSymbols.clear();
 
       debugPrint('[MapContainer][Popup] rendering stalls: ${widget.stalls.length}');
 
       for (final stall in widget.stalls) {
         try {
-          final circle = await popupController!.addCircle(
-            CircleOptions(
+          final symbol = await popupController!.addSymbol(
+            SymbolOptions(
+              fontNames: ['Noto Sans Regular'],
               geometry: stall.latLng,
-              circleRadius: 10,
-              circleColor: const Color(0xffffa621),
-              circleStrokeColor: const Color(0xffFFFFFF),
-              circleStrokeWidth: 3,
+              iconImage: "cafe", // Different icon to stand out
+              iconSize: 2.5, 
+              textField: stall.name,
+              textOffset: const Offset(0, 2.5), 
+              textColor: const Color(0xFF1E90FF), // Bright Dodger Blue
+              textHaloColor: const Color(0xFFFFFFFF),
+              textHaloWidth: 2.0,
+              textSize: 16.0, 
             ),
           );
-          popupStallCircles.add(circle);
+          popupStallSymbols.add(symbol);
         } catch (error) {
-          debugPrint('[MapContainer][Popup] addCircle failed | id: ${stall.id} | error: $error');
+          debugPrint('[MapContainer][Popup] addSymbol failed | id: ${stall.id} | error: $error');
         }
       }
 
-      debugPrint('[MapContainer][Popup] rendered stalls: ${popupStallCircles.length}/${widget.stalls.length}');
+      debugPrint('[MapContainer][Popup] rendered stalls: ${popupStallSymbols.length}/${widget.stalls.length}');
     }
 
     showDialog(
@@ -102,12 +146,12 @@ class MapContainerState extends State<MapContainer> {
         child: SizedBox(
           height: 500.h,
           width: double.infinity,
-          child: ClipRRect(
+          child: _mapStyleString == null ? const Center(child: CircularProgressIndicator()) : ClipRRect(
             borderRadius: BorderRadius.circular(AppConstants.radiusM.r),
             child: Stack(
               children: [
                 VietmapGL(
-                  styleString: 'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$apiKey',
+                  styleString: _mapStyleString!,
                   initialCameraPosition: CameraPosition(
                     // Pass the current location so the popup starts where the user is
                     target: _userLocation ?? const LatLng(10.762, 106.660),
@@ -202,7 +246,7 @@ class MapContainerState extends State<MapContainer> {
     }
 
     await clearStalls();
-    debugPrint('[MapContainer] cleared old stall circles');
+    debugPrint('[MapContainer] cleared old stall symbols');
 
     for (final stall in stalls) {
       final isCoordinateValid =
@@ -218,30 +262,36 @@ class MapContainerState extends State<MapContainer> {
         continue;
       }
 
-      debugPrint('[MapContainer] adding circle | id: ${stall.id} | name: ${stall.name} | lat: ${stall.latitude} | lng: ${stall.longitude}');
+      debugPrint('[MapContainer] adding symbol | id: ${stall.id} | name: ${stall.name} | lat: ${stall.latitude} | lng: ${stall.longitude}');
 
       try {
-        final circle = await _mapController!.addCircle(
-          CircleOptions(
+        final symbol = await _mapController!.addSymbol(
+          SymbolOptions(
+            fontNames: ['Noto Sans Regular'],
             geometry: stall.latLng,
-            circleRadius: 10,
-            circleColor: const Color(0xffffa621),
-            circleStrokeColor: const Color(0xffFFFFFF),
-            circleStrokeWidth: 3,
+            iconImage: "cafe",
+            iconSize: 2.5,
+            textField: stall.name,
+            textOffset: const Offset(0, 2.5),
+            textColor: const Color(0xFF1E90FF), // Bright Dodger Blue
+            textHaloColor: const Color(0xFFFFFFFF),
+            textHaloWidth: 2.0,
+            textSize: 16.0,
+            zIndex: 10,
           ),
         );
 
-        _stallCircles.add(circle);
-        debugPrint('[MapContainer] circle added successfully | id: ${stall.id}');
+        _stallSymbols.add(symbol);
+        debugPrint('[MapContainer] symbol added successfully | id: ${stall.id}');
       } catch (error, stackTrace) {
-        debugPrint('[MapContainer] addCircle failed | id: ${stall.id} | error: $error');
+        debugPrint('[MapContainer] addSymbol failed | id: ${stall.id} | error: $error');
         debugPrint('$stackTrace');
       }
     }
 
-    debugPrint('[MapContainer] displayStalls completed | rendered: ${_stallCircles.length}/${stalls.length}');
+    debugPrint('[MapContainer] displayStalls completed | rendered: ${_stallSymbols.length}/${stalls.length}');
 
-    if (_stallCircles.isNotEmpty && !_hasAutoFocusedStalls) {
+    if (_stallSymbols.isNotEmpty && !_hasAutoFocusedStalls) {
       await _focusCameraToStalls(stalls);
       _hasAutoFocusedStalls = true;
     }
@@ -288,7 +338,7 @@ class MapContainerState extends State<MapContainer> {
         CameraUpdate.newLatLngBounds(
           bounds,
           left: 40,
-          top: 40,
+          top: 120,
           right: 40,
           bottom: 120,
         ),
@@ -304,11 +354,11 @@ class MapContainerState extends State<MapContainer> {
   }
 
   Future<void> clearStalls() async {
-    if (_mapController == null || _stallCircles.isEmpty) return;
-    for (final circle in _stallCircles) {
-      await _mapController!.removeCircle(circle);
+    if (_mapController == null || _stallSymbols.isEmpty) return;
+    for (final symbol in _stallSymbols) {
+      await _mapController!.removeSymbol(symbol);
     }
-    _stallCircles.clear();
+    _stallSymbols.clear();
   }
 
   Future<void> _updateUserLocationMarker(LatLng location) async {
@@ -337,17 +387,17 @@ class MapContainerState extends State<MapContainer> {
 
   Future<void> startLiveTracking() async {
     bool serviceEnabled;
-    LocationPermission permission;
+    PermissionStatus permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return Future.error('Location services are disabled.');
     }
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+    permission = await Permission.location.status;
+    if (permission.isDenied) {
+      permission = await Permission.location.request();
+      if (permission.isDenied) {
         return Future.error('Location permissions are denied');
       }
     }
@@ -447,6 +497,23 @@ class MapContainerState extends State<MapContainer> {
       ),
     );
     _hasRoute = true;
+
+    if (routePoints.length >= 2) {
+      final bounds = LatLngBounds(
+        southwest: LatLng(
+          routePoints.map((p) => p.latitude).reduce((a, b) => a < b ? a : b),
+          routePoints.map((p) => p.longitude).reduce((a, b) => a < b ? a : b),
+        ),
+        northeast: LatLng(
+          routePoints.map((p) => p.latitude).reduce((a, b) => a > b ? a : b),
+          routePoints.map((p) => p.longitude).reduce((a, b) => a > b ? a : b),
+        ),
+      );
+
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, left: 50, top: 50, right: 50, bottom: 50),
+      );
+    }
   }
 
   /// Clear the currently drawn route from the map.
@@ -460,6 +527,14 @@ class MapContainerState extends State<MapContainer> {
   Widget build (BuildContext context) {
     final apiKey = EnvConfig.apiKey;
 
+    if (_mapStyleString == null) {
+      return SizedBox(
+        height: 160.h,
+        width: double.infinity,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return SizedBox(
       height: 160.h,
       width: double.infinity,
@@ -472,7 +547,7 @@ class MapContainerState extends State<MapContainer> {
               // -----------------------------------------------------------
               // INSERT YOUR API KEY HERE
               // -----------------------------------------------------------
-              styleString: 'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$apiKey',
+              styleString: _mapStyleString!,
 
               initialCameraPosition: const CameraPosition(
                 target: LatLng(10.762, 106.660), // Default to Ho Chi Minh City

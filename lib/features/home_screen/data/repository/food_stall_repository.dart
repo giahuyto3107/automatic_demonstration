@@ -15,7 +15,7 @@ class FoodStallRepository {
       );
 
       if (response.data == null) {
-        throw Exception("No food stall found");
+        throw Exception(response.message ?? "No food stall found");
       }
 
       if (response.data is! List) {
@@ -47,7 +47,7 @@ class FoodStallRepository {
       );
 
       if (response.data == null) {
-        throw Exception("No food stall found");
+        throw Exception(response.message ?? "No food stall found");
       }
 
       if (response.data is! List) {

@@ -1,8 +1,8 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const int connectionTimeout = 30000;
-  static const int receiveTimeout = 30000;
+  static const int connectionTimeout = 5000;
+  static const int receiveTimeout = 5000;
   static const int maxRetryAttempts = 3;
 
   static const String contentTypeHeader = 'application/json';
