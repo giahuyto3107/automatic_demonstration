@@ -470,6 +470,7 @@ class _FoodStallContainerState extends State<_FoodStallContainer> {
                   ),
                   _FoodStallLowerContainer(
                     name: widget.foodStallModel.name,
+                    address: widget.foodStallModel.address,
                     description: widget.foodStallModel.description,
                     distanceText: distanceText,
                     timeText: timeText,
@@ -502,7 +503,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
     return Stack(
       children: [
         Container(
-          height: 90.h,
+          height: 80.h,
           decoration: BoxDecoration(
             gradient: AppColors.foodStallUpperContainerBackgroundColor,
             borderRadius: .vertical(
@@ -546,6 +547,7 @@ class _FoodStallUpperContainer extends StatelessWidget {
 
 class _FoodStallLowerContainer extends StatelessWidget {
   final String name;
+  final String address;
   final String description;
   final String distanceText;
   final String timeText;
@@ -553,6 +555,7 @@ class _FoodStallLowerContainer extends StatelessWidget {
 
   const _FoodStallLowerContainer({
     required this.name,
+    required this.address,
     required this.description,
     required this.distanceText,
     required this.timeText,
@@ -574,36 +577,37 @@ class _FoodStallLowerContainer extends StatelessWidget {
           vertical: AppConstants.spacingXS.h
         ),
         child: Column(
-            crossAxisAlignment: .start,
-            mainAxisAlignment: .center,
-            children: [
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: AppConstants.fontM.sp,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: .w700
-                ),
+          crossAxisAlignment: .start,
+          mainAxisAlignment: .center,
+          children: [
+            SizedBox(height: AppConstants.spacingXS.h,),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: AppConstants.fontM.sp,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontWeight: .w700
               ),
-              SizedBox(height: AppConstants.spacingXXS.h,),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: AppConstants.fontS.sp,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: .w300
-                ),
+            ),
+            SizedBox(height: AppConstants.spacingS.h,),
+            Text(
+              address,
+              style: TextStyle(
+                fontSize: AppConstants.fontS.sp,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontWeight: .w400
               ),
+            ),
 
-              SizedBox(height: AppConstants.spacingS.h,),
+            SizedBox(height: AppConstants.spacingS.h,),
 
-              _RouteInfoRow(
-                distanceText: distanceText,
-                timeText: timeText,
-                isLoading: isLoading,
-              ),
-            ],
-          ),
+            _RouteInfoRow(
+              distanceText: distanceText,
+              timeText: timeText,
+              isLoading: isLoading,
+            ),
+          ],
+        ),
       ),
     );
   }
