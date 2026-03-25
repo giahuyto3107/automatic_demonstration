@@ -1,6 +1,11 @@
 import 'dart:core';
 
-import 'package:automatic_demonstration/core/constants/mock_food_stalls.dart';
+import 'package:automatic_demonstration/core/constants/en_food_stalls.dart';
+import 'package:automatic_demonstration/core/constants/ja_food_stalls.dart';
+import 'package:automatic_demonstration/core/constants/ko_food_stalls.dart';
+import 'package:automatic_demonstration/core/constants/vi_food_stalls.dart';
+import 'package:automatic_demonstration/core/constants/zh_food_stalls.dart';
+
 import 'package:automatic_demonstration/core/services/database_service.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/data/repository/food_stall_repository.dart';
@@ -63,11 +68,13 @@ class FoodStall extends _$FoodStall {
     } catch (e) {
       print("Fetch All Stalls Error: $e => Fallback to Local Mock Data");
       
+      final localStalls = _getLocalStalls(lang);
+
       // When offline, sort local mock data by nearest distance to user if location is available
       try {
         final position = await Geolocator.getLastKnownPosition();
         if (position != null) {
-          final sortedLocal = List<FoodStallModel>.from(mockFoodStalls);
+          final sortedLocal = List<FoodStallModel>.from(localStalls);
           sortedLocal.sort((a, b) {
             final distA = Geolocator.distanceBetween(
                 position.latitude, position.longitude, a.latitude, a.longitude);
@@ -81,7 +88,23 @@ class FoodStall extends _$FoodStall {
         print("Could not get location for offline sorting: $locErr");
       }
       
-      return mockFoodStalls.take(5).toList(); // Return top 5 fallback if no location
+      return localStalls.take(5).toList(); // Return top 5 fallback if no location
+    }
+  }
+
+  List<FoodStallModel> _getLocalStalls(String lang) {
+    switch (lang) {
+      case 'en':
+        return enFoodStalls;
+      case 'zh':
+        return zhFoodStalls;
+      case 'ja':
+        return jaFoodStalls;
+      case 'ko':
+        return koFoodStalls;
+      case 'vi':
+      default:
+        return viFoodStalls;
     }
   }
 

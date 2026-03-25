@@ -33,7 +33,7 @@ final class FoodStallProvider
   FoodStall create() => FoodStall();
 }
 
-String _$foodStallHash() => r'6c181a0cbfe89c7a5ec36b835f7d91053152714d';
+String _$foodStallHash() => r'889d84be499beecf5d70a65c4bd775e2ec3f8753';
 
 abstract class _$FoodStall extends $AsyncNotifier<List<FoodStallModel>> {
   FutureOr<List<FoodStallModel>> build();

@@ -1,6 +1,6 @@
 ﻿import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 
-final List<FoodStallModel> mockFoodStalls = [
+final List<FoodStallModel> viFoodStalls = [
   FoodStallModel(
     id: 1,
     name: "Hải Sản Tươi Sống Sáu Nở",
