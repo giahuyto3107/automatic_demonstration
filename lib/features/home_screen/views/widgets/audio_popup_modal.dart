@@ -11,6 +11,8 @@ import 'package:automatic_demonstration/core/utils/time_converter.dart';
 import 'package:automatic_demonstration/core/constants/constants.dart';
 import 'package:automatic_demonstration/core/theme/theme.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:automatic_demonstration/core/services/analytics_service.dart';
+
 
 class AudioPopupModal extends ConsumerStatefulWidget {
   final FoodStallModel foodStallModel;
@@ -73,6 +75,7 @@ class _AudioPopupModalState extends ConsumerState<AudioPopupModal> {
               ),
               SizedBox(height: AppConstants.spacingXS.h,),
               _PlaybackControls(
+                foodStallModel: widget.foodStallModel,
                 isPlaying: isPlaying,
                 isLoading: isLoading,
                 onSkip: widget.onSkip,
@@ -230,12 +233,14 @@ class _AudioTimeIndicator extends StatelessWidget {
   }
 }
 
-class _PlaybackControls extends ConsumerWidget {
+ class _PlaybackControls extends ConsumerWidget {
+  final FoodStallModel foodStallModel;
   final bool isPlaying;
   final bool isLoading;
   final VoidCallback? onSkip;
 
   const _PlaybackControls({
+    required this.foodStallModel,
     required this.isPlaying,
     required this.isLoading,
     this.onSkip,
@@ -262,6 +267,7 @@ class _PlaybackControls extends ConsumerWidget {
             final notifier = ref.read(audioProvider.notifier);
             final playerState = ref.read(audioPlayerStateProvider).value;
             if (playerState?.processingState == ProcessingState.completed) {
+              AnalyticsService().trackPlay(foodStallModel.id, isAuto: false);
               notifier.seek(Duration.zero);
               notifier.resume();
             } else if (isPlaying) {

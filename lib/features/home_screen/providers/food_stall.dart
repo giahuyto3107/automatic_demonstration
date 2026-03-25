@@ -1,4 +1,4 @@
-﻿import 'dart:core';
+import 'dart:core';
 
 import 'package:automatic_demonstration/core/constants/mock_food_stalls.dart';
 import 'package:automatic_demonstration/core/services/database_service.dart';
@@ -7,6 +7,7 @@ import 'package:automatic_demonstration/features/home_screen/data/repository/foo
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:automatic_demonstration/core/providers/app_locale.dart';
 
 part 'food_stall.g.dart';
 
@@ -14,13 +15,14 @@ part 'food_stall.g.dart';
 class FoodStall extends _$FoodStall {
   @override
   Future<List<FoodStallModel>> build() async {
-    return _fetchWithLocationFallback();
+    final lang = ref.watch(appLocaleProvider).languageCode;
+    return _fetchWithLocationFallback(lang: lang);
   }
 
-  Future<List<FoodStallModel>> _fetchWithLocationFallback({double radius = 500}) async {
+  Future<List<FoodStallModel>> _fetchWithLocationFallback({double radius = 500, required String lang}) async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return await _fetchFoodStalls();
+      if (!serviceEnabled) return await _fetchFoodStalls(lang);
       
       // Sá»­ dá»¥ng permission_handler Ä‘á»ƒ xin quyá»n mÆ°á»£t mÃ  hÆ¡n trong Riverpod state 
       var status = await Permission.location.status;
@@ -41,22 +43,23 @@ class FoodStall extends _$FoodStall {
           lat: position.latitude,
           lng: position.longitude,
           radius: radius,
+          lang: lang,
         );
       }
       
       // Fallback
-      return await _fetchFoodStalls();
+      return await _fetchFoodStalls(lang);
     } catch (e) {
       // Fallback to all food stalls if nearby fetching fails
       print("Geolocation Error => Fallback Load All Stalls. Lá»—i: $e");
-      return await _fetchFoodStalls();
+      return await _fetchFoodStalls(lang);
     }
   }
 
-  Future<List<FoodStallModel>> _fetchFoodStalls() async {
+  Future<List<FoodStallModel>> _fetchFoodStalls(String lang) async {
     try {
       final repository = FoodStallRepository(DatabaseService.instance);
-      return await repository.getFoodStalls();
+      return await repository.getFoodStalls(lang);
     } catch (e) {
       print("Fetch All Stalls Error: $e => Fallback to Local Mock Data");
       
@@ -86,18 +89,21 @@ class FoodStall extends _$FoodStall {
     required double lat,
     required double lng,
     required double radius,
+    required String lang,
   }) async {
     final repository = FoodStallRepository(DatabaseService.instance);
-    return await repository.getNearbyFoodStalls(lat: lat, lng: lng, radius: radius);
+    return await repository.getNearbyFoodStalls(lat: lat, lng: lng, radius: radius, lang: lang);
   }
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchWithLocationFallback());
+    final lang = ref.read(appLocaleProvider).languageCode;
+    state = await AsyncValue.guard(() => _fetchWithLocationFallback(lang: lang));
   }
 
   Future<void> updateRadius(double newRadius) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchWithLocationFallback(radius: newRadius));
+    final lang = ref.read(appLocaleProvider).languageCode;
+    state = await AsyncValue.guard(() => _fetchWithLocationFallback(radius: newRadius, lang: lang));
   }
 }

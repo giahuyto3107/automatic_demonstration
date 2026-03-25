@@ -19,6 +19,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:automatic_demonstration/core/services/analytics_service.dart';
+
 
 class FoodStallListSection extends ConsumerStatefulWidget {
   final List<FoodStallModel> foodStalls;
@@ -64,7 +66,8 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
     super.dispose();
   }
 
-  void _onPlay(int index) {
+  void _onPlay(int index, {bool isAuto = false}) {
+    AnalyticsService().trackPlay(_foodStallModels[index].id, isAuto: isAuto);
     if (_isModalShowing) {
       Navigator.pop(context);
       _isModalShowing = false;
@@ -112,6 +115,7 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   }
 
   void _onSkip(int index) {
+    AnalyticsService().trackSkip(_foodStallModels[index].id);
     setState(() {
       _allowFoodStallIndexes[index] = false;
     });
@@ -184,7 +188,7 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
                               playerState?.processingState != ProcessingState.completed;
             
             if (!isPlaying) {
-              _onPlay(index);
+              _onPlay(index, isAuto: true);
             }
           }
         }
@@ -222,7 +226,7 @@ class _BuildUI extends StatelessWidget {
   final PageController pageController;
   final int currentPage;
   final int selectedCategoryIndex;
-  final Function(int) onPlay;
+  final void Function(int, {bool isAuto}) onPlay;
   final Function(int) onSkip;
   final Function(int) onRestore;
   final Function(int) onCategoryChanged;

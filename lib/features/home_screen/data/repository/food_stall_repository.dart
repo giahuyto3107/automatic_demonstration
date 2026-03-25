@@ -7,10 +7,10 @@ class FoodStallRepository {
 
   FoodStallRepository(this._db);
 
-  Future<List<FoodStallModel>> getFoodStalls() async {
+  Future<List<FoodStallModel>> getFoodStalls(String lang) async {
     try {
       final response = await _db.get(
-        Endpoints.getAllStalls,
+        Endpoints.getAllStalls(lang),
 
       );
 
@@ -35,6 +35,7 @@ class FoodStallRepository {
   Future<List<FoodStallModel>> getNearbyFoodStalls({
     required double lat,
     required double lng,
+    required String lang,
     double radius = 500,
   }) async {
     try {
@@ -42,6 +43,7 @@ class FoodStallRepository {
         Endpoints.getNearbyStalls(
           lat: lat,
           lng: lng,
+          lang: lang,
           radius: radius,
         ),
       );

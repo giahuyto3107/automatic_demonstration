@@ -12,11 +12,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:automatic_demonstration/core/services/analytics_service.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await EnvService.init();
+  await AnalyticsService().init();
+
+  AppLifecycleListener(
+    onPause: () => AnalyticsService().flush(),
+    onHide: () => AnalyticsService().flush(),
+  );
 
   // We manually manage the container to pre-load the locale
   final container = ProviderContainer();

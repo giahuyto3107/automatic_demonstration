@@ -15,6 +15,7 @@ abstract class Endpoints {
 
   // Analytics
   static String track = '$_analytics/track';
+  static String trackBatch = '$_analytics/track/batch';
 
 
   // Food Stalls
@@ -32,13 +33,14 @@ abstract class Endpoints {
 
   static const String createFoodStall = _stalls;
 
-  static const String getAllStalls = _stalls;
+  static String getAllStalls(String lang) => '$_stalls?lang=$lang';
 
   static const String syncStalls = '$_stalls/sync';
 
   static String getNearbyStalls({
     required double lat,
     required double lng,
+    required String lang,
     double radius = 500,
-  }) => '$_stalls/geofence?lat=$lat&lng=$lng&radius=$radius';
+  }) => '$_stalls/geofence?lat=$lat&lng=$lng&radius=$radius&lang=$lang';
 }
