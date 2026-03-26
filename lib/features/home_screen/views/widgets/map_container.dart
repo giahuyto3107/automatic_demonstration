@@ -4,12 +4,12 @@ import 'package:automatic_demonstration/core/config/config.dart';
 import 'package:automatic_demonstration/core/constants/app_constants.dart';
 import 'package:automatic_demonstration/core/utils/polyline_decoder.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
+import 'package:automatic_demonstration/core/services/location_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 
 class MapContainer extends StatefulWidget {
@@ -31,6 +31,7 @@ class MapContainerState extends State<MapContainer> {
   bool _hasRoute = false;
   bool _isStyleLoaded = false;
   bool _hasAutoFocusedStalls = false;
+  bool _myLocationEnabled = false;
   String? _mapStyleString;
 
   final List<Symbol> _stallSymbols = [];
@@ -117,9 +118,9 @@ class MapContainerState extends State<MapContainer> {
         try {
           final symbol = await popupController!.addSymbol(
             SymbolOptions(
-              fontNames: ['Noto Sans Regular'],
               geometry: stall.latLng,
               iconImage: "cafe", // Different icon to stand out
+
               iconSize: 2.5, 
               textField: stall.name,
               textOffset: const Offset(0, 2.5), 
@@ -267,9 +268,9 @@ class MapContainerState extends State<MapContainer> {
       try {
         final symbol = await _mapController!.addSymbol(
           SymbolOptions(
-            fontNames: ['Noto Sans Regular'],
             geometry: stall.latLng,
             iconImage: "cafe",
+
             iconSize: 2.5,
             textField: stall.name,
             textOffset: const Offset(0, 2.5),
@@ -338,9 +339,9 @@ class MapContainerState extends State<MapContainer> {
         CameraUpdate.newLatLngBounds(
           bounds,
           left: 40,
-          top: 120,
+          top: 40,
           right: 40,
-          bottom: 120,
+          bottom: 40,
         ),
       );
 
@@ -386,23 +387,33 @@ class MapContainerState extends State<MapContainer> {
   }
 
   Future<void> startLiveTracking() async {
-    bool serviceEnabled;
-    PermissionStatus permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Permission.location.status;
-    if (permission.isDenied) {
-      permission = await Permission.location.request();
-      if (permission.isDenied) {
-        return Future.error('Location permissions are denied');
+    final hasPermission = await LocationService().requestPermission();
+    
+    if (!hasPermission) {
+      debugPrint('[MapContainer] Location permission not granted, skipping live tracking.');
+      if (mounted) {
+        setState(() {
+          _myLocationEnabled = false;
+        });
       }
+      return;
     }
 
-    Position initialPosition = await Geolocator.getCurrentPosition();
+    if (mounted) {
+      setState(() {
+        _myLocationEnabled = true;
+      });
+    }
+
+    Position? initialPosition = await LocationService().getCurrentPosition();
+    if (initialPosition == null) return;
+
+    if (mounted) {
+      setState(() {
+        _userLocation = LatLng(initialPosition.latitude, initialPosition.longitude);
+      });
+      await _updateUserLocationMarker(_userLocation!);
+    }
 
     if (mounted) {
       setState(() {
@@ -577,8 +588,8 @@ class MapContainerState extends State<MapContainer> {
                 }
               },
 
-              myLocationEnabled: true,
-              myLocationRenderMode: MyLocationRenderMode.compass,
+              myLocationEnabled: _myLocationEnabled,
+              myLocationRenderMode: _myLocationEnabled ? MyLocationRenderMode.compass : MyLocationRenderMode.normal,
             ),
           ),
 

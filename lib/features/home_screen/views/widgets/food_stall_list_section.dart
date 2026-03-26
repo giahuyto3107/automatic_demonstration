@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:automatic_demonstration/core/services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:automatic_demonstration/core/services/analytics_service.dart';
@@ -38,6 +39,7 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
   int _currentPage = 0;
   int _selectedCategoryIndex = 0;
   bool _isModalShowing = false;
+  int _currentModalId = 0;
 
   @override
   void initState() {
@@ -92,6 +94,8 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
     }
 
     _isModalShowing = true;
+    final int modalId = ++_currentModalId;
+    
     showModalBottomSheet(
       context: context,
       isDismissible: true,
@@ -110,7 +114,9 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
         );
       },
     ).then((_) {
-      _isModalShowing = false;
+      if (_currentModalId == modalId) {
+        _isModalShowing = false;
+      }
     });
   }
 
@@ -186,9 +192,13 @@ class _FoodStallListSectionState extends ConsumerState<FoodStallListSection> {
             final playerState = ref.read(audioPlayerStateProvider).value;
             final isPlaying = (playerState?.playing ?? false) && 
                               playerState?.processingState != ProcessingState.completed;
+            final isProcessing = playerState?.processingState == ProcessingState.loading || 
+                                 playerState?.processingState == ProcessingState.buffering;
             
-            if (!isPlaying) {
+            // Only auto-play if no modal is showing, no audio is playing/loading
+            if (!isPlaying && !isProcessing && !_isModalShowing) {
               _onPlay(index, isAuto: true);
+              break; // Prevent multiple auto-plays in the same tick
             }
           }
         }
@@ -405,13 +415,12 @@ class _FoodStallContainerState extends State<_FoodStallContainer> {
     final stallLng = widget.foodStallModel.longitude;
 
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
-      debugPrint('[RouteInfo] User: ${position.latitude}, ${position.longitude} -> Stall: $stallLat, $stallLng');
+      final position = await LocationService().getCurrentPosition();
+      if (position == null) {
+        debugPrint('[RouteInfo] Skipping route fetch: No location permission or service disabled.');
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
       final repository = RoutingRepository(VietMapRoutingService.instance);
       final route = await repository.getRouteToStall(
@@ -699,11 +708,15 @@ class _ActionButtonsRow extends ConsumerWidget {
     final longitude = foodStallModel.longitude;
 
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
+      final position = await LocationService().getCurrentPosition();
+      if (position == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vui lòng cấp quyền truy cập vị trí để xem đường đi.')),
+          );
+        }
+        return;
+      }
 
       final repository = RoutingRepository(VietMapRoutingService.instance);
       final route = await repository.getRouteToStall(

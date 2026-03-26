@@ -1,16 +1,14 @@
 import 'dart:core';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 
-import 'package:automatic_demonstration/core/constants/en_food_stalls.dart';
-import 'package:automatic_demonstration/core/constants/ja_food_stalls.dart';
-import 'package:automatic_demonstration/core/constants/ko_food_stalls.dart';
-import 'package:automatic_demonstration/core/constants/vi_food_stalls.dart';
-import 'package:automatic_demonstration/core/constants/zh_food_stalls.dart';
-
+import 'package:automatic_demonstration/core/services/location_service.dart';
+import 'package:automatic_demonstration/core/offline/dto/stall.dart';
+import 'package:automatic_demonstration/core/offline/dto/stall_mapper.dart';
 import 'package:automatic_demonstration/core/services/database_service.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
 import 'package:automatic_demonstration/features/home_screen/data/repository/food_stall_repository.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:automatic_demonstration/core/providers/app_locale.dart';
 
@@ -26,24 +24,20 @@ class FoodStall extends _$FoodStall {
 
   Future<List<FoodStallModel>> _fetchWithLocationFallback({double radius = 500, required String lang}) async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return await _fetchFoodStalls(lang);
+      final hasPermission = await LocationService().requestPermission();
       
-      // Sá»­ dá»¥ng permission_handler Ä‘á»ƒ xin quyá»n mÆ°á»£t mÃ  hÆ¡n trong Riverpod state 
-      var status = await Permission.location.status;
-      if (status.isDenied) {
-        status = await Permission.location.request();
+      if (!hasPermission) {
+        print('[FoodStall] No location permission, falling back to all stalls.');
+        return await _fetchFoodStalls(lang);
       }
 
-      if (status.isGranted) {
-        // We have permission, actively wait for GPS location. DÃ¹ng timeout Ä‘á»ƒ trÃ¡nh káº¹t mÃ£i á»Ÿ Loading state
-        Position position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)
-        ).timeout(
-          const Duration(seconds: 4),
-          onTimeout: () => throw Exception('Location request timed out'),
-        );
+      // We have permission, actively wait for GPS location. Dùng timeout để tránh kẹt mãi ở Loading state
+      Position? position = await LocationService().getCurrentPosition().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => null,
+      );
 
+      if (position != null) {
         return await _fetchNearbyFoodStalls(
           lat: position.latitude,
           lng: position.longitude,
@@ -68,7 +62,7 @@ class FoodStall extends _$FoodStall {
     } catch (e) {
       print("Fetch All Stalls Error: $e => Fallback to Local Mock Data");
       
-      final localStalls = _getLocalStalls(lang);
+      final localStalls = await _getLocalStalls(lang);
 
       // When offline, sort local mock data by nearest distance to user if location is available
       try {
@@ -92,19 +86,28 @@ class FoodStall extends _$FoodStall {
     }
   }
 
-  List<FoodStallModel> _getLocalStalls(String lang) {
-    switch (lang) {
-      case 'en':
-        return enFoodStalls;
-      case 'zh':
-        return zhFoodStalls;
-      case 'ja':
-        return jaFoodStalls;
-      case 'ko':
-        return koFoodStalls;
-      case 'vi':
-      default:
-        return viFoodStalls;
+  Future<List<FoodStallModel>> _getLocalStalls(String lang) async {
+    try {
+      final jsonString = await rootBundle.loadString('lib/core/offline/stall_json/$lang.json');
+      final list = jsonDecode(jsonString) as List<dynamic>;
+      
+      final usedLanguage = switch (lang.toLowerCase()) {
+        'vi' => StallLanguage.vi,
+        'zh' => StallLanguage.zh,
+        'ja' => StallLanguage.ja,
+        'ko' => StallLanguage.ko,
+        'en' => StallLanguage.en,
+        _ => StallLanguage.en,
+      };
+
+      final parsedList = StallListResponse.fromJsonList(list, usedLanguage).sortedByPriority;
+      return parsedList.map((dto) => dto.toModel()).toList();
+    } catch (e) {
+      print("Error loading local JSON for lang $lang: $e. Fallback to vi.");
+      if (lang != 'vi') {
+        return await _getLocalStalls('vi');
+      }
+      return [];
     }
   }
 

@@ -117,7 +117,7 @@ class MainApp extends ConsumerWidget {
             useMaterial3: true,
           ),
           darkTheme: ThemeData(
-            scaffoldBackgroundColor: Colors.transparent,
+            scaffoldBackgroundColor: const Color(0xFF121212),
             brightness: Brightness.dark,
             primaryColor: AppColors.primaryColor,
             textTheme: const TextTheme(bodyMedium: TextStyle(color: AppColors.textOnDark)),

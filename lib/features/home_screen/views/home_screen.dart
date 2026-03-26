@@ -8,12 +8,12 @@ import 'package:automatic_demonstration/features/home_screen/providers/food_stal
 import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
 import 'package:automatic_demonstration/l10n/app_localizations.dart';
+import 'package:automatic_demonstration/core/services/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -220,9 +220,9 @@ class _GPSSectionState extends State<_GPSSection> with WidgetsBindingObserver {
   }
 
   Future<void> _checkPermission() async {
-    final status = await Permission.location.status;
+    final status = await LocationService().hasPermission();
     setState(() {
-      isLocationGranted = status.isGranted;
+      isLocationGranted = status;
     });
   }
 
@@ -282,16 +282,12 @@ class _RefreshButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (!serviceEnabled) {
-          await Geolocator.openLocationSettings();
-        }
-
-        var status = await Permission.location.status;
-        if (status.isDenied) {
-          status = await Permission.location.request();
-          if (status.isPermanentlyDenied) {
-            await openAppSettings();
+        final hasPermission = await LocationService().requestPermission();
+        if (!hasPermission) {
+          // If still no permission after request, maybe they permanently denied
+          final permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.deniedForever) {
+            await LocationService().openSettings();
           }
         }
         

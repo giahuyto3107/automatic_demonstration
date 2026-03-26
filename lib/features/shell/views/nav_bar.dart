@@ -102,11 +102,7 @@ class NavBar extends StatelessWidget {
                 height: (fabRadius + 8) * 2,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF6A8FFF), Color(0xFF3A50E0)],
-                  ),
+                  color: const Color(0xffdea969),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF3A50E0).withOpacity(0.45),

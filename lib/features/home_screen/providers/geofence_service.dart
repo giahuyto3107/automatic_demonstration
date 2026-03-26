@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:automatic_demonstration/core/services/location_service.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_model.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -73,8 +75,15 @@ class GeofenceService extends _$GeofenceService {
     _listenToLocation(stalls);
   }
 
-  void _listenToLocation(List<FoodStallModel> stalls) {
+  void _listenToLocation(List<FoodStallModel> stalls) async {
     _positionSubscription?.cancel();
+
+    // Ensure we have permission before listening
+    if (!await LocationService().hasPermission()) {
+      debugPrint('[GeofenceService] Missing location permission, skipping listener.');
+      return;
+    }
+
     _positionSubscription =
         Geolocator.getPositionStream(
           locationSettings: const LocationSettings(
@@ -84,6 +93,8 @@ class GeofenceService extends _$GeofenceService {
         ).listen((position) {
           _lastPosition = position;
           _checkGeofences(position, stalls);
+        }, onError: (e) {
+          debugPrint('[GeofenceService] Error in position stream: $e');
         });
   }
 
