@@ -78,6 +78,11 @@ class MapContainerState extends State<MapContainer> {
     }
   }
 
+  Future<void> refreshMapStyle() async {
+    debugPrint('[MapContainer] refreshMapStyle called.');
+    await _determineMapStyle();
+  }
+
   @override
   void didUpdateWidget(MapContainer oldWidget) {
     super.didUpdateWidget(oldWidget);

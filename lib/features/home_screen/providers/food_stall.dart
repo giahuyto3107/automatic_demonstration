@@ -1,5 +1,6 @@
 import 'dart:core';
 import 'dart:convert';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:automatic_demonstration/core/services/location_service.dart';
@@ -24,35 +25,61 @@ class FoodStall extends _$FoodStall {
 
   Future<List<FoodStallModel>> _fetchWithLocationFallback({double radius = 500, required String lang}) async {
     try {
+      bool isConnected = true;
+      try {
+        final List<ConnectivityResult> connectivityResult = await Connectivity().checkConnectivity();
+        isConnected = !connectivityResult.contains(ConnectivityResult.none);
+      } catch (_) {}
+
+      if (!isConnected) {
+        print('[FoodStall] Explicitly Offline -> Loading Local JSON.');
+        final localStalls = await _getLocalStalls(lang);
+        try {
+          final position = await LocationService().getCurrentPosition();
+          if (position != null) {
+            return _sortByDistance(localStalls, position.latitude, position.longitude);
+          }
+        } catch (_) {}
+        return localStalls;
+      }
+
       final hasPermission = await LocationService().requestPermission();
       
       if (!hasPermission) {
-        print('[FoodStall] No location permission, falling back to all stalls.');
+        print('[FoodStall] No permission, fetching all stalls online.');
         return await _fetchFoodStalls(lang);
       }
 
-      // We have permission, actively wait for GPS location. Dùng timeout để tránh kẹt mãi ở Loading state
       Position? position = await LocationService().getCurrentPosition().timeout(
         const Duration(seconds: 4),
         onTimeout: () => null,
       );
 
       if (position != null) {
-        return await _fetchNearbyFoodStalls(
+        final nearbyStalls = await _fetchNearbyFoodStalls(
           lat: position.latitude,
           lng: position.longitude,
           radius: radius,
           lang: lang,
         );
+        return _sortByDistance(nearbyStalls, position.latitude, position.longitude);
       }
       
-      // Fallback
       return await _fetchFoodStalls(lang);
     } catch (e) {
-      // Fallback to all food stalls if nearby fetching fails
-      print("Geolocation Error => Fallback Load All Stalls. Lá»—i: $e");
-      return await _fetchFoodStalls(lang);
+      print("Network/GPS Error => Fallback Local JSON. Lỗi: $e");
+      return await _getLocalStalls(lang);
     }
+  }
+
+  List<FoodStallModel> _sortByDistance(List<FoodStallModel> stalls, double lat, double lng) {
+    final sortedStalls = List<FoodStallModel>.from(stalls);
+    sortedStalls.sort((a, b) {
+      final distA = Geolocator.distanceBetween(lat, lng, a.latitude, a.longitude);
+      final distB = Geolocator.distanceBetween(lat, lng, b.latitude, b.longitude);
+      return distA.compareTo(distB);
+    });
+    return sortedStalls;
   }
 
   Future<List<FoodStallModel>> _fetchFoodStalls(String lang) async {
@@ -63,24 +90,12 @@ class FoodStall extends _$FoodStall {
       print("Fetch All Stalls Error: $e => Fallback to Local Mock Data");
       
       final localStalls = await _getLocalStalls(lang);
-
-      // When offline, sort local mock data by nearest distance to user if location is available
       try {
-        final position = await Geolocator.getLastKnownPosition();
+        final position = await LocationService().getCurrentPosition();
         if (position != null) {
-          final sortedLocal = List<FoodStallModel>.from(localStalls);
-          sortedLocal.sort((a, b) {
-            final distA = Geolocator.distanceBetween(
-                position.latitude, position.longitude, a.latitude, a.longitude);
-            final distB = Geolocator.distanceBetween(
-                position.latitude, position.longitude, b.latitude, b.longitude);
-            return distA.compareTo(distB);
-          });
-          return sortedLocal.take(5).toList();
+           return _sortByDistance(localStalls, position.latitude, position.longitude).take(5).toList();
         }
-      } catch (locErr) {
-        print("Could not get location for offline sorting: $locErr");
-      }
+      } catch (_) {}
       
       return localStalls.take(5).toList(); // Return top 5 fallback if no location
     }

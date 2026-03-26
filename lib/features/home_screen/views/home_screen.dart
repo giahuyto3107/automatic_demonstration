@@ -273,13 +273,13 @@ class _GPSSectionState extends State<_GPSSection> with WidgetsBindingObserver {
   }
 }
 
-class _RefreshButton extends StatelessWidget {
+class _RefreshButton extends ConsumerWidget {
   final VoidCallback onRefresh;
 
   const _RefreshButton({required this.onRefresh});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () async {
         final hasPermission = await LocationService().requestPermission();
@@ -290,9 +290,10 @@ class _RefreshButton extends StatelessWidget {
             await LocationService().openSettings();
           }
         }
-        
         onRefresh();
+        MapContainer.globalKey.currentState?.refreshMapStyle();
         MapContainer.globalKey.currentState?.startLiveTracking();
+        ref.read(foodStallProvider.notifier).refresh();
       },
       child: Icon(
         FontAwesomeIcons.rotate,
