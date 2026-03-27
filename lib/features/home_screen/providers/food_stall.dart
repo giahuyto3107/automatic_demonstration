@@ -68,18 +68,32 @@ class FoodStall extends _$FoodStall {
       return await _fetchFoodStalls(lang);
     } catch (e) {
       print("Network/GPS Error => Fallback Local JSON. Lỗi: $e");
-      return await _getLocalStalls(lang);
+      final localStalls = await _getLocalStalls(lang);
+      try {
+        final position = await LocationService().getCurrentPosition();
+        if (position != null) {
+          return _sortByDistance(localStalls, position.latitude, position.longitude);
+        }
+      } catch (_) {}
+      return localStalls;
     }
   }
 
   List<FoodStallModel> _sortByDistance(List<FoodStallModel> stalls, double lat, double lng) {
-    final sortedStalls = List<FoodStallModel>.from(stalls);
-    sortedStalls.sort((a, b) {
-      final distA = Geolocator.distanceBetween(lat, lng, a.latitude, a.longitude);
-      final distB = Geolocator.distanceBetween(lat, lng, b.latitude, b.longitude);
-      return distA.compareTo(distB);
+    var stallsWithDistance = stalls.map((stall) {
+      final dist = Geolocator.distanceBetween(lat, lng, stall.latitude, stall.longitude);
+      return stall.copyWith(distance: dist);
+    }).toList();
+
+    stallsWithDistance.sort((a, b) {
+      int distComparison = (a.distance ?? 0).compareTo(b.distance ?? 0);
+      if (distComparison != 0) {
+        return distComparison;
+      }
+      // If distance is the same, prioritize lower priority
+      return (a.priority ?? 9999).compareTo(b.priority ?? 9999);
     });
-    return sortedStalls;
+    return stallsWithDistance;
   }
 
   Future<List<FoodStallModel>> _fetchFoodStalls(String lang) async {
@@ -93,11 +107,11 @@ class FoodStall extends _$FoodStall {
       try {
         final position = await LocationService().getCurrentPosition();
         if (position != null) {
-           return _sortByDistance(localStalls, position.latitude, position.longitude).take(5).toList();
+           return _sortByDistance(localStalls, position.latitude, position.longitude);
         }
       } catch (_) {}
       
-      return localStalls.take(5).toList(); // Return top 5 fallback if no location
+      return localStalls;
     }
   }
 
