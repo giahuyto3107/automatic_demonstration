@@ -139,7 +139,9 @@ class _ModalHeading extends ConsumerWidget {
                 ),
                 SizedBox(width: AppConstants.spacingS.w,),
                 Text(
-                  isPlaying ? AppLocalizations.of(context)!.audioIsPlaying : AppLocalizations.of(context)!.audioIsStopped,
+                  isPlaying
+                    ? AppLocalizations.of(context)!.audioIsPlaying
+                    : AppLocalizations.of(context)!.audioIsStopped,
                   style: TextStyle(
                     fontSize: AppConstants.fontXS.sp,
                     color: Theme.of(context).textTheme.bodyMedium?.color,

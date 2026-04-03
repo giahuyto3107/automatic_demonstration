@@ -41,7 +41,7 @@ final class GeofenceServiceProvider
   }
 }
 
-String _$geofenceServiceHash() => r'08c3c8dd51fb33732477e092e1e1053e8e302d3c';
+String _$geofenceServiceHash() => r'351143d4797ab76c4f4d8b472654c86892594077';
 
 abstract class _$GeofenceService extends $Notifier<Map<int, GeofenceState>> {
   Map<int, GeofenceState> build();
