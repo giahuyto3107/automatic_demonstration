@@ -4,7 +4,7 @@ import 'package:automatic_demonstration/core/theme/app_colors.dart';
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
 import 'package:automatic_demonstration/features/home_screen/data/models/gps_enum.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/geofence_service.dart';
-import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/food_stall_provider.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/food_stall_list_section.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/map_container.dart';
 import 'package:automatic_demonstration/l10n/app_localizations.dart';
@@ -21,7 +21,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final backgroundGradients = context.backgroundGradients;
-    final foodStallAsync = ref.watch(foodStallProvider);
+    final foodStallAsync = ref.watch(foodStallsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -45,9 +45,10 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  data: (foodStalls) {
+                  data: (foodStallState) {
+                    final foodStalls = foodStallState.items;
                     debugPrint(
-                      '[HomeScreen] foodStallProvider data received | count: ${foodStalls.length}',
+                      '[HomeScreen] foodStallsProvider data received | count: ${foodStalls.length}',
                     );
                     // Initialize or update geofence watching
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -293,7 +294,7 @@ class _RefreshButton extends ConsumerWidget {
         onRefresh();
         MapContainer.globalKey.currentState?.refreshMapStyle();
         MapContainer.globalKey.currentState?.startLiveTracking();
-        ref.read(foodStallProvider.notifier).refresh();
+        ref.read(foodStallsProvider.notifier).refresh();
       },
       child: Icon(
         FontAwesomeIcons.rotate,

@@ -1,5 +1,5 @@
 import 'package:automatic_demonstration/core/theme/theme_getter.dart';
-import 'package:automatic_demonstration/features/home_screen/providers/food_stall.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/food_stall_provider.dart';
 import 'package:automatic_demonstration/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:automatic_demonstration/core/constants/constants.dart';
 import 'package:automatic_demonstration/core/theme/theme.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/radius_provider.dart';
 
 class AudioCategoryContainer extends ConsumerStatefulWidget {
   final int allCount;
@@ -27,7 +28,6 @@ class AudioCategoryContainer extends ConsumerStatefulWidget {
 class _AudioCategoryContainerState extends ConsumerState<AudioCategoryContainer> {
   final LayerLink _layerLink = LayerLink();
   int selectedIndex = 0;
-  double _selectedRadius = 500; // Default radius of 500m
   OverlayEntry? _overlayEntry;
 
   @override
@@ -52,9 +52,8 @@ class _AudioCategoryContainerState extends ConsumerState<AudioCategoryContainer>
     });
     if (index == 2) {
       _showDistanceFilterDropdown();
-    } else {
-      widget.onCategoryChanged(index);
     }
+    widget.onCategoryChanged(index);
   }
 
   void _showDistanceFilterDropdown() {
@@ -84,12 +83,9 @@ class _AudioCategoryContainerState extends ConsumerState<AudioCategoryContainer>
               child: Material(
                 color: Colors.transparent,
                 child: RadiusFilterDropdown(
-                  selectedRadius: _selectedRadius,
+                  selectedRadius: ref.read(radiusProvider),
                   onConfirm: (double radius) {
-                    setState(() {
-                      _selectedRadius = radius;
-                    });
-                    ref.read(foodStallProvider.notifier).updateRadius(radius);
+                    ref.read(foodStallsProvider.notifier).updateRadius(radius);
                     _removeOverlay();
                   },
                 ),
@@ -127,8 +123,11 @@ class _AudioCategoryContainerState extends ConsumerState<AudioCategoryContainer>
             bool isSelected = selectedIndex == index;
             bool isLastCategoryItem = index == lastCategoryItemIndex;
 
+            final currentRadius = ref.watch(radiusProvider);
             Widget itemContent = Text(
-              isLastCategoryItem ? item : item,
+              isLastCategoryItem
+                ? (currentRadius == 500 ? item : "${currentRadius.toInt()}m")
+                : item,
               style: TextStyle(
                 fontSize: AppConstants.fontS.sp,
                 color: isSelected ? selectionColors.selectedText : selectionColors.unselectedText,

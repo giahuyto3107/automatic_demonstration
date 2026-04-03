@@ -6,6 +6,7 @@ import 'package:automatic_demonstration/features/home_screen/data/models/food_st
 import 'package:automatic_demonstration/features/home_screen/data/repository/routing_repository.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_notifier.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/audio_service_provider.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/food_stall_provider.dart';
 import 'package:automatic_demonstration/features/home_screen/providers/geofence_service.dart';
 import 'package:automatic_demonstration/features/home_screen/utils/duration_converter.dart';
 import 'package:automatic_demonstration/features/home_screen/views/widgets/audio_popup_modal.dart';
@@ -18,7 +19,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:automatic_demonstration/core/services/location_service.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:automatic_demonstration/core/services/analytics_service.dart';
 
@@ -274,7 +274,7 @@ class _BuildUI extends StatelessWidget {
           child: _FoodStallList(
             models: foodStallModels,
             visibleIndices: visibleIndices,
-            allowedIndexes: allowFoodStallIndexes,
+            allowFoodStallIndexes: allowFoodStallIndexes,
             controller: pageController,
             onPlay: onPlay,
             onSkip: onSkip,
@@ -321,19 +321,19 @@ class _FoodStallListTitle extends StatelessWidget {
   }
 }
 
-class _FoodStallList extends StatelessWidget {
+class _FoodStallList extends ConsumerWidget {
   final List<FoodStallModel> models;
   final List<int> visibleIndices;
-  final List<bool> allowedIndexes;
+  final List<bool> allowFoodStallIndexes;
   final PageController controller;
-  final Function(int) onPlay;
+  final Function(int, {bool isAuto}) onPlay;
   final Function(int) onSkip;
   final Function(int) onRestore;
 
   const _FoodStallList({
     required this.models,
     required this.visibleIndices,
-    required this.allowedIndexes,
+    required this.allowFoodStallIndexes,
     required this.controller,
     required this.onPlay,
     required this.onSkip,
@@ -341,7 +341,7 @@ class _FoodStallList extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (visibleIndices.isEmpty) {
       return Center(
         child: Text(
@@ -354,12 +354,22 @@ class _FoodStallList extends StatelessWidget {
       );
     }
 
+    final foodStallState = ref.watch(foodStallsProvider).value;
+    final isLoadingMore = foodStallState?.isLoading ?? false;
+
     return PageView.builder(
       controller: controller,
-      itemCount: visibleIndices.length,
+      itemCount: visibleIndices.length + (isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index >= visibleIndices.length) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // Trigger prefetch logic from poi_infinite_scroll pattern
+          ref.read(foodStallsProvider.notifier).onItemVisible(index);
+
         int originalIndex = visibleIndices[index];
-        bool isSkipped = !allowedIndexes[originalIndex];
+        bool isSkipped = !allowFoodStallIndexes[originalIndex];
 
         return Container(
           // Margin creates space outside the colored stall container

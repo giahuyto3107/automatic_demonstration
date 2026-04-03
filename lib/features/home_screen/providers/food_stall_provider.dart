@@ -1,8 +1,7 @@
-import 'dart:core';
 import 'dart:convert';
+import 'package:automatic_demonstration/features/home_screen/data/models/food_stall_state.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart' show rootBundle;
-
 import 'package:automatic_demonstration/core/services/location_service.dart';
 import 'package:automatic_demonstration/core/offline/dto/stall.dart';
 import 'package:automatic_demonstration/core/offline/dto/stall_mapper.dart';
@@ -12,15 +11,50 @@ import 'package:automatic_demonstration/features/home_screen/data/repository/foo
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:automatic_demonstration/core/providers/app_locale.dart';
+import 'package:automatic_demonstration/features/home_screen/providers/radius_provider.dart';
 
-part 'food_stall.g.dart';
+part 'food_stall_provider.g.dart';
 
 @riverpod
-class FoodStall extends _$FoodStall {
+class FoodStalls extends _$FoodStalls {
+  static const int _prefetchBuffer = 5;
+
   @override
-  Future<List<FoodStallModel>> build() async {
+  Future<FoodStallState> build() async {
     final lang = ref.watch(appLocaleProvider).languageCode;
-    return _fetchWithLocationFallback(lang: lang);
+    final radius = ref.watch(radiusProvider);
+    
+    final items = await _fetchWithLocationFallback(radius: radius, lang: lang);
+    
+    return FoodStallState(
+      items: items,
+      currentPage: 0,
+      hasMore: false, // API currently returns all items
+      isLoading: false,
+    );
+  }
+
+  int get prefetchTriggerIndex {
+    final s = state.value;
+    if (s == null) return 0;
+    return s.items.length - _prefetchBuffer;
+  }
+
+  void onItemVisible(int index) {
+    final s = state.value;
+    if (s == null) return;
+    if (index >= (s.items.length - _prefetchBuffer) && !s.isLoading && s.hasMore) {
+      loadNextPage();
+    }
+  }
+
+  Future<void> loadNextPage() async {
+    final s = state.value;
+    if (s == null || s.isLoading || !s.hasMore) return;
+    
+    state = AsyncValue.data(s.copyWith(isLoading: true));
+    // Implementation for next page would go here if API supported it
+    state = AsyncValue.data(s.copyWith(isLoading: false, hasMore: false));
   }
 
   Future<List<FoodStallModel>> _fetchWithLocationFallback({double radius = 500, required String lang}) async {
@@ -153,12 +187,15 @@ class FoodStall extends _$FoodStall {
   Future<void> refresh() async {
     state = const AsyncLoading();
     final lang = ref.read(appLocaleProvider).languageCode;
-    state = await AsyncValue.guard(() => _fetchWithLocationFallback(lang: lang));
+    final radius = ref.read(radiusProvider);
+    state = await AsyncValue.guard(() async {
+      final items = await _fetchWithLocationFallback(radius: radius, lang: lang);
+      return FoodStallState(items: items);
+    });
   }
 
   Future<void> updateRadius(double newRadius) async {
-    state = const AsyncLoading();
-    final lang = ref.read(appLocaleProvider).languageCode;
-    state = await AsyncValue.guard(() => _fetchWithLocationFallback(radius: newRadius, lang: lang));
+    // This now just updates the radiusProvider, which triggers a rebuild of the build() method
+    ref.read(radiusProvider.notifier).state = newRadius;
   }
 }

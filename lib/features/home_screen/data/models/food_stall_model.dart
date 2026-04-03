@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:automatic_demonstration/core/config/env_config.dart';
+import 'package:automatic_demonstration/features/home_screen/data/models/stall_enums.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 
 class FoodStallModel {
@@ -17,11 +18,14 @@ class FoodStallModel {
   final String imageUrl;
   final int? minPrice;
   final int? maxPrice;
-  final List<String> featuredReview;
+  final List<String> featuredReviews;
   final double rating;
   final bool isTriggered;
   final Color? iconColor;
   final int? priority;
+  final FoodStallStatus status;
+  final FoodStallLocalizationStatus localizationStatus;
+  final FoodStallLanguage usedLanguage;
 
   FoodStallModel({
     this.id = 0,
@@ -37,11 +41,14 @@ class FoodStallModel {
     this.imageUrl = '',
     this.minPrice,
     this.maxPrice,
-    this.featuredReview = const [],
+    this.featuredReviews = const [],
     this.rating = 0.0,
     this.isTriggered = false,
     this.iconColor,
     this.priority,
+    this.status = FoodStallStatus.inactive,
+    this.localizationStatus = FoodStallLocalizationStatus.none,
+    this.usedLanguage = FoodStallLanguage.en,
   });
 
   LatLng get latLng => LatLng(latitude, longitude);
@@ -60,10 +67,13 @@ class FoodStallModel {
     String? imageUrl,
     int? minPrice,
     int? maxPrice,
-    List<String>? featuredReview,
+    List<String>? featuredReviews,
     double? rating,
     bool? isTriggered,
     int? priority,
+    FoodStallStatus? status,
+    FoodStallLocalizationStatus? localizationStatus,
+    FoodStallLanguage? usedLanguage,
   }) {
     return FoodStallModel(
       id: id ?? this.id,
@@ -79,10 +89,13 @@ class FoodStallModel {
       imageUrl: imageUrl ?? this.imageUrl,
       minPrice: minPrice ?? this.minPrice,
       maxPrice: maxPrice ?? this.maxPrice,
-      featuredReview: featuredReview ?? this.featuredReview,
+      featuredReviews: featuredReviews ?? this.featuredReviews,
       rating: rating ?? this.rating,
       isTriggered: isTriggered ?? this.isTriggered,
       priority: priority ?? this.priority,
+      status: status ?? this.status,
+      localizationStatus: localizationStatus ?? this.localizationStatus,
+      usedLanguage: usedLanguage ?? this.usedLanguage,
     );
   }
 
@@ -129,7 +142,7 @@ class FoodStallModel {
       imageUrl: resolveUrl(json['imageUrl'] as String? ?? ''),
       minPrice: json['minPrice'] as int?,
       maxPrice: json['maxPrice'] as int?,
-      featuredReview:
+      featuredReviews:
           (json['featuredReviews'] as List<dynamic>? ??
                   json['featuredReview'] as List<dynamic>?)
               ?.map((e) => e as String)
@@ -138,7 +151,40 @@ class FoodStallModel {
       rating: (json['rating'] as num? ?? 0).toDouble(),
       isTriggered: json['isTriggered'] as bool? ?? false,
       priority: json['priority'] as int?,
+      status: _parseStatus(json['status'] as String?),
+      localizationStatus: _parseLocalizationStatus(json['localizationStatus'] as String?),
+      usedLanguage: _parseLanguage(json['usedLanguage'] as String?),
     );
+  }
+
+  static FoodStallStatus _parseStatus(String? raw) {
+    if (raw == null) return FoodStallStatus.inactive;
+    return switch (raw.toUpperCase()) {
+      'ACTIVE' => FoodStallStatus.active,
+      'INACTIVE' => FoodStallStatus.inactive,
+      _ => FoodStallStatus.inactive,
+    };
+  }
+
+  static FoodStallLocalizationStatus _parseLocalizationStatus(String? raw) {
+    if (raw == null) return FoodStallLocalizationStatus.none;
+    return switch (raw.toUpperCase()) {
+      'COMPLETE' => FoodStallLocalizationStatus.complete,
+      'PARTIAL' => FoodStallLocalizationStatus.partial,
+      _ => FoodStallLocalizationStatus.none,
+    };
+  }
+
+  static FoodStallLanguage _parseLanguage(String? raw) {
+    if (raw == null) return FoodStallLanguage.en;
+    return switch (raw.toLowerCase()) {
+      'vi' => FoodStallLanguage.vi,
+      'zh' => FoodStallLanguage.zh,
+      'ja' => FoodStallLanguage.ja,
+      'ko' => FoodStallLanguage.ko,
+      'en' => FoodStallLanguage.en,
+      _ => FoodStallLanguage.en,
+    };
   }
 
   Map<String, dynamic> toJson() {
@@ -156,10 +202,13 @@ class FoodStallModel {
       'imageUrl': imageUrl,
       'minPrice': minPrice,
       'maxPrice': maxPrice,
-      'featuredReview': featuredReview,
+      'featuredReviews': featuredReviews,
       'rating': rating,
       'isTriggered': isTriggered,
       'priority': priority,
+      'status': status.name.toUpperCase(),
+      'localizationStatus': localizationStatus.name.toUpperCase(),
+      'usedLanguage': usedLanguage.name,
     };
   }
 }

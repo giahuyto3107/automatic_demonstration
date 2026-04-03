@@ -4,7 +4,7 @@ import 'package:automatic_demonstration/core/services/vietmap_routing_service.da
 import 'package:automatic_demonstration/features/poi_infinite_scroll/data/models/lat_lng.dart';
 import 'package:automatic_demonstration/features/poi_infinite_scroll/data/models/routing_data.dart';
 import 'package:automatic_demonstration/features/poi_infinite_scroll/providers/user_location_provider.dart';
-import 'package:automatic_demonstration/features/poi_infinite_scroll/utils/haversine.dart';
+import 'package:automatic_demonstration/core/utils/haversine.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

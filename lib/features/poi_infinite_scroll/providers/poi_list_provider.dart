@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:automatic_demonstration/features/poi_infinite_scroll/data/models/lat_lng.dart';
 import 'package:automatic_demonstration/features/poi_infinite_scroll/data/models/poi_model.dart';
 import 'package:automatic_demonstration/features/poi_infinite_scroll/providers/user_location_provider.dart';
-import 'package:automatic_demonstration/features/poi_infinite_scroll/utils/haversine.dart';
+import 'package:automatic_demonstration/core/utils/haversine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

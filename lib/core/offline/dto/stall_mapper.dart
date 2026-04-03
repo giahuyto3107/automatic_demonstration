@@ -16,7 +16,7 @@ extension StallDtoMapper on StallDto {
       imageUrl: imageUrl ?? '',
       minPrice: minPrice,
       maxPrice: maxPrice,
-      featuredReview: featuredReviews,
+      featuredReviews: featuredReviews,
       rating: rating ?? 0.0,
       priority: priority,
     );
