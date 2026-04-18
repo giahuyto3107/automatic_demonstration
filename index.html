@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dynamic QR Download</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
+        #qrcode { margin: 20px; }
+    </style>
+</head>
+<body>
+<h2>Quét để tải App (Mã tự làm mới mỗi 2p)</h2>
+<div id="qrcode"></div>
+<p id="timer">Mã sẽ làm mới sau: <span id="seconds">120</span> giây</p>
+
+<script>
+    const apkUrl = "https://github.com/user/repo/releases/download/v1/app.apk";
+    const qrcode = new QRCode(document.getElementById("qrcode"), {
+        width: 250,
+        height: 250
+    });
+
+    function updateQR() {
+        // Tạo một token dựa trên thời gian để link luôn "mới"
+        const timestamp = Math.floor(Date.now() / 120000); // Thay đổi mỗi 120s
+        const dynamicUrl = `${apkUrl}?t=${timestamp}`;
+
+        qrcode.clear();
+        qrcode.makeCode(dynamicUrl);
+        console.log("QR Refreshed:", dynamicUrl);
+    }
+
+    // Đếm ngược hiển thị cho người dùng
+    let timeLeft = 120;
+    setInterval(() => {
+        timeLeft--;
+        document.getElementById("seconds").innerText = timeLeft;
+        if (timeLeft <= 0) {
+            updateQR();
+            timeLeft = 120;
+        }
+    }, 1000);
+
+    updateQR(); // Chạy lần đầu
+</script>
+</body>
+</html>
