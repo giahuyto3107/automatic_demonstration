@@ -1,0 +1,148 @@
+@startuml mobile-mvvm-sequence
+title Mobile Layer — MVVM Flow\n(Flutter StatefulWidget · Riverpod Generator · Dio)
+
+' ── Participants ──────────────────────────────────────────────────────────────
+actor       User                                                  as U
+boundary    "View\n(ConsumerStatefulWidget)"                      as View
+control     "ViewModel\n(@riverpod AsyncNotifier)"                as VM
+entity      "Repository\n(FoodStallRepository)"                   as Repo
+collections "Remote Data Source\n(DatabaseService — Dio)"         as RDS
+database    "REST API"                                            as API
+
+' ── Colour hints (optional, ignored if renderer doesn't support skinparam) ───
+skinparam sequence {
+  ArrowColor      #2C7BE5
+  LifeLineBorderColor #2C7BE5
+  ParticipantBorderColor #2C7BE5
+  ActorBorderColor #2C7BE5
+  NoteBackgroundColor #FFF9C4
+  NoteBorderColor #F9A825
+}
+
+' ══════════════════════════════════════════════════════════════════════════════
+== 1 · Screen opens — initial load ==
+' ══════════════════════════════════════════════════════════════════════════════
+
+U   ->  View : Open screen
+activate View
+
+note over View
+  **initState()**
+  • attaches ScrollController listeners
+  • schedules first build via Riverpod
+end note
+
+View -> VM : ref.watch(provider)\n→ triggers AsyncNotifier.build()
+activate VM
+
+VM  ->  View : emit AsyncLoading
+View -> U    : Show CircularProgressIndicator
+
+VM  ->  Repo : getFoodStalls(lang) /\ngetNearbyFoodStalls(lat, lng, radius, lang)
+activate Repo
+
+Repo -> RDS  : dio.get(Endpoints.getAllStalls(lang))
+activate RDS
+
+RDS  -> API  : GET /stalls?lang=vi
+activate API
+
+' ── Success path ──────────────────────────────────────────────────────────────
+alt HTTP 200 OK
+
+  API  --> RDS  : 200 JSON [ { id, name, lat, lng, … } ]
+  deactivate API
+
+  RDS  --> Repo : ApiResponse<dynamic>.success(data)
+  deactivate RDS
+
+  Repo --> VM   : List<FoodStallModel>
+  deactivate Repo
+
+  VM   ->  View : emit AsyncData(List<FoodStallModel>)
+  View ->  U    : Render map + stall list
+
+' ── Error / network failure path ─────────────────────────────────────────────
+else DioException (timeout / 4xx / 5xx / no network)
+
+  API  --> RDS  : error response / timeout
+  deactivate API
+
+  RDS  --> Repo : ApiResponse.error(message, statusCode)
+  deactivate RDS
+
+  note over Repo
+    **Offline fallback:**
+    load bundled JSON from assets
+    (lib/core/offline/stall_json/<lang>.json)
+  end note
+
+  Repo --> VM   : List<FoodStallModel> (offline data)\nor rethrows Exception
+  deactivate Repo
+
+  alt offline data available
+    VM  ->  View : emit AsyncData(offlineStalls)
+    View -> U    : Render offline content
+  else no data at all
+    VM  ->  View : emit AsyncError(message)
+    View -> U    : Show error message + Retry button
+  end
+
+end
+
+deactivate VM
+
+' ══════════════════════════════════════════════════════════════════════════════
+== 2 · Provider state changes → View rebuilds automatically ==
+' ══════════════════════════════════════════════════════════════════════════════
+
+note over View, VM
+  **Riverpod ref.watch() subscription**
+  Every time the AsyncNotifier emits a new state
+  (AsyncLoading / AsyncData / AsyncError), Flutter
+  schedules a rebuild of all widgets that called
+  ref.watch(provider). No manual setState() needed.
+end note
+
+' ══════════════════════════════════════════════════════════════════════════════
+== 3 · User triggers a retry ==
+' ══════════════════════════════════════════════════════════════════════════════
+
+U   ->  View : Tap "Retry" button
+View -> VM   : ref.read(provider.notifier).refresh()
+activate VM
+
+VM  ->  View : emit AsyncLoading
+View -> U    : Show CircularProgressIndicator
+
+VM  ->  Repo : getFoodStalls(lang)
+activate Repo
+Repo -> RDS  : dio.get(endpoint)
+activate RDS
+RDS  -> API  : GET /stalls?lang=vi
+activate API
+
+alt HTTP 200 OK
+  API  --> RDS  : 200 JSON
+  deactivate API
+  RDS  --> Repo : ApiResponse.success
+  deactivate RDS
+  Repo --> VM   : List<FoodStallModel>
+  deactivate Repo
+  VM   ->  View : emit AsyncData(stalls)
+  View -> U    : Render updated content
+else Still failing
+  API  --> RDS  : error
+  deactivate API
+  RDS  --> Repo : ApiResponse.error
+  deactivate RDS
+  Repo --> VM   : throws / returns offline data
+  deactivate Repo
+  VM   ->  View : emit AsyncError(message)
+  View -> U    : Show error message
+end
+
+deactivate VM
+deactivate View
+
+@enduml
