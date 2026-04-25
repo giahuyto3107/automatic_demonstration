@@ -1,0 +1,82 @@
+@startuml
+title MVVM Flow — StatefulWidget View + Riverpod Generator ViewModel + Dio Remote Data Source
+
+skinparam ActivityBackgroundColor #FAFAFA
+skinparam ActivityBorderColor #555555
+skinparam ArrowColor #333333
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #AAAAAA
+
+start
+
+:User navigates to Screen;
+
+partition "View — StatefulWidget" {
+  :createState() — State object created;
+  :initState() called;
+  note right
+    ref.read(vmProvider.notifier).load()
+    is called here to trigger the
+    initial data fetch.
+  end note
+}
+
+repeat
+
+  partition "ViewModel — Riverpod Generator (@riverpod AsyncNotifier)" {
+    :load() invoked;
+    :state = AsyncLoading();
+  }
+
+  partition "View — build()" {
+    :ref.watch(vmProvider) returns AsyncLoading;
+    :Render loading indicator;
+  }
+
+  partition "ViewModel — load() body" {
+    :Call repository.fetchData();
+
+    partition "Repository" {
+      :Call remoteDataSource.getData();
+
+      partition "Remote Data Source — Dio" {
+        :dio.get('/resource');
+      }
+
+      if (HTTP response?) then (200 OK)
+        :Parse JSON payload — DTO;
+        :Map DTO to DomainModel;
+      else (Error: timeout / 4xx / 5xx)
+        :Wrap as DioException / Failure;
+      endif
+    }
+
+    if (Result?) then (Success)
+      :state = AsyncData(domainModel);
+    else (Failure)
+      :state = AsyncError(error, stackTrace);
+    endif
+  }
+
+  if (Current state?) then (AsyncData)
+    partition "View — build()" {
+      :ref.watch(vmProvider) returns AsyncData;
+      :Render content — success UI;
+    }
+  else (AsyncError)
+    partition "View — build()" {
+      :ref.watch(vmProvider) returns AsyncError;
+      :Render error message + Retry button;
+    }
+    :User taps "Retry";
+    partition "View" {
+      :ref.read(vmProvider.notifier).load();
+    }
+  endif
+
+repeat while (Retry requested?) is (yes)
+->no;
+
+stop
+
+@enduml

@@ -1,0 +1,39 @@
+@startuml
+title App Use Case Diagram
+
+left to right direction
+
+skinparam ActorBackgroundColor #DDEEFF
+skinparam ActorBorderColor #3366AA
+skinparam UsecaseBackgroundColor #FAFAFA
+skinparam UsecaseBorderColor #555555
+skinparam ArrowColor #333333
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #AAAAAA
+
+actor User
+
+rectangle "Mobile Application" {
+  usecase "View Data" as UC_View
+  usecase "Load Content" as UC_Load
+  usecase "Retry Load" as UC_Retry
+}
+
+User --> UC_View : initiates
+
+UC_View ..> UC_Load : <<include>>
+UC_Retry ..> UC_View : <<extend>>\ncondition: load failed
+
+note right of UC_Load
+  Calls repository → Dio remote
+  data source → API server.
+  Returns domain model on success
+  or error on failure.
+end note
+
+note right of UC_Retry
+  Available when the previous
+  load attempt has failed.
+end note
+
+@enduml
