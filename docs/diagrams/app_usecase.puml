@@ -22,8 +22,7 @@ rectangle "Mobile Application" {
 User --> UC_View : initiates
 
 UC_View ..> UC_Load : <<include>>
-UC_Retry ..> UC_Load : <<include>>
-UC_Retry .> UC_View : <<extend>>\ncondition: load failed
+UC_Retry ..> UC_View : <<extend>>\ncondition: load failed
 
 note right of UC_Load
   Calls repository → Dio remote
