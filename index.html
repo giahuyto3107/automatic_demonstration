@@ -11,7 +11,7 @@
 <body>
 <h2>Quét để tải App Automatic Demonstration (Mã tự làm mới mỗi 2p)</h2>
 <div id="qrcode"></div>
-<p id="timer">Mã sẽ làm mới sau: <span id="seconds">120</span> giây</p>
+<p id="timer">Mã sẽ làm mới sau: <span id="seconds">30</span> giây</p>
 
 <script>
     const apkUrl = "https://github.com/giahuyto3107/automatic_demonstration/releases/download/v1.0.4/app-release.apk";
@@ -22,7 +22,7 @@
 
     function updateQR() {
         // Tạo một token dựa trên thời gian để link luôn "mới"
-        const timestamp = Math.floor(Date.now() / 120000); // Thay đổi mỗi 120s
+        const timestamp = Math.floor(Date.now() / 30000); // Thay đổi mỗi 120s
         const dynamicUrl = `${apkUrl}?t=${timestamp}`;
 
         qrcode.clear();
