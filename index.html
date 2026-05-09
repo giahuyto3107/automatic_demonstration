@@ -9,7 +9,7 @@
     </style>
 </head>
 <body>
-<h2>Quét để tải App Automatic Demonstration (Mã tự làm mới mỗi 2p)</h2>
+<h2>Quét để tải App Automatic Demonstration (Mã tự làm mới mỗi 30s)</h2>
 <div id="qrcode"></div>
 <p id="timer">Mã sẽ làm mới sau: <span id="seconds">30</span> giây</p>
 
@@ -31,13 +31,13 @@
     }
 
     // Đếm ngược hiển thị cho người dùng
-    let timeLeft = 120;
+    let timeLeft = 30;
     setInterval(() => {
         timeLeft--;
         document.getElementById("seconds").innerText = timeLeft;
         if (timeLeft <= 0) {
             updateQR();
-            timeLeft = 120;
+            timeLeft = 30;
         }
     }, 1000);
 
